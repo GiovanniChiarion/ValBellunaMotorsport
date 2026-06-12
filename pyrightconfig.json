@@ -1,0 +1,16 @@
+{
+  "include": ["app"],
+  "exclude": [".venv", "alembic"],
+  "pythonVersion": "3.14",
+  "typeCheckingMode": "basic",
+  "reportMissingTypeStubs": false,
+  "reportUnknownParameterType": false,
+  "reportMissingParameterType": false,
+  "reportGeneralTypeIssues": false,
+  "reportArgumentType": false,
+  "reportAttributeAccessIssue": false,
+  "reportInvalidTypeForm": false,
+  "reportReturnType": false,
+  "venvPath": ".",
+  "venv": ".venv"
+}

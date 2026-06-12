@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Storico Modifiche — CalendarioKart{% endblock %}
+{% block content %}
+{% from '_icons.html' import icon_clock %}
+
+<div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+    <div class="flex items-center space-x-3">
+        <div class="size-10 rounded-xl bg-orange-100 dark:bg-orange-900/20 flex items-center justify-center">
+            {{ icon_clock(class="size-5 text-orange-600 dark:text-orange-400") }}
+        </div>
+        <h1 class="text-2xl font-extrabold tracking-tight text-gray-900 dark:text-white">Storico Modifiche</h1>
+    </div>
+    {% if current_user.ruolo == 'superadmin' %}
+    <a href="/history/export" class="inline-flex items-center px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-sm font-medium shadow-sm transition-all duration-150">
+        <svg class="size-4 mr-1.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
+        Esporta Storico
+    </a>
+    {% endif %}
+</div>
+
+<div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-200 dark:border-slate-700 overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200 dark:divide-slate-700">
+            <thead class="bg-gray-50 dark:bg-slate-800/50">
+                <tr>
+                    <th class="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400">Data</th>
+                    <th class="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400">Utente</th>
+                    <th class="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400">Gara</th>
+                    <th class="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400">Campo</th>
+                    <th class="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400">Valore vecchio</th>
+                    <th class="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400">Valore nuovo</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100 dark:divide-slate-700/50">
+                {% for log in logs %}
+                <tr class="hover:bg-gray-50 dark:hover:bg-slate-700/30 transition-colors duration-150 text-sm">
+                    <td class="px-4 py-3.5 text-gray-500 dark:text-slate-400 whitespace-nowrap">{{ log.timestamp.strftime('%d/%m/%Y %H:%M') }}</td>
+                    <td class="px-4 py-3.5">
+                        <div class="flex items-center space-x-2">
+                            <div class="size-6 rounded-full bg-gray-200 dark:bg-slate-600 flex items-center justify-center text-[10px] font-bold text-gray-600 dark:text-slate-300">
+                                {{ log.user.nome[:1]|upper if log.user else '?' }}
+                            </div>
+                            <span class="font-medium text-gray-900 dark:text-white">{{ log.user.nome if log.user else '—' }}</span>
+                        </div>
+                    </td>
+                    <td class="px-4 py-3.5 text-gray-600 dark:text-slate-400 max-w-[200px] truncate" title="{{ log.race.descrizione if log.race else '' }}">
+                        {{ log.race.descrizione if log.race else '—' }}
+                    </td>
+                    <td class="px-4 py-3.5">
+                        <span class="inline-flex px-2 py-0.5 rounded-lg text-xs font-medium bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300">{{ log.field }}</span>
+                    </td>
+                    <td class="px-4 py-3.5 text-gray-500 dark:text-slate-400 max-w-[200px] truncate">{{ log.old_value or '—' }}</td>
+                    <td class="px-4 py-3.5 text-gray-900 dark:text-white font-medium max-w-[200px] truncate">{{ log.new_value or '—' }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" class="px-4 py-16 text-center">
+                        <div class="inline-flex items-center justify-center size-12 bg-gray-100 dark:bg-slate-700 rounded-xl mb-3">
+                            {{ icon_clock(class="size-6 text-gray-400") }}
+                        </div>
+                        <p class="text-gray-400 dark:text-slate-500 font-medium">Nessuna modifica registrata</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

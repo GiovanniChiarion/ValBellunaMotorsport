@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% block title %}Report — CalendarioKart{% endblock %}
+{% block content %}
+{% from '_icons.html' import icon_chart_bar, icon_flag, icon_users, icon_check_circle, icon_x_circle, icon_question_mark_circle, icon_calendar %}
+
+<div class="flex items-center space-x-3 mb-8">
+    <div class="size-10 rounded-xl bg-green-100 dark:bg-green-900/20 flex items-center justify-center">
+        {{ icon_chart_bar(class="size-5 text-green-600 dark:text-green-400") }}
+    </div>
+    <h1 class="text-2xl font-extrabold tracking-tight text-gray-900 dark:text-white">Report & Statistiche</h1>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-200 dark:border-slate-700 p-5 card-hover">
+        <div class="flex items-start justify-between">
+            <div>
+                <p class="text-3xl font-extrabold text-gray-900 dark:text-white">{{ total_members }}</p>
+                <p class="text-sm text-gray-500 dark:text-slate-400 mt-1">Membri attivi</p>
+            </div>
+            <div class="size-10 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                {{ icon_users(class="size-5 text-blue-600 dark:text-blue-400") }}
+            </div>
+        </div>
+    </div>
+    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-200 dark:border-slate-700 p-5 card-hover">
+        <div class="flex items-start justify-between">
+            <div>
+                <p class="text-3xl font-extrabold text-gray-900 dark:text-white">{{ total_races }}</p>
+                <p class="text-sm text-gray-500 dark:text-slate-400 mt-1">Totale gare</p>
+            </div>
+            <div class="size-10 rounded-xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                {{ icon_flag(class="size-5 text-red-600 dark:text-red-400") }}
+            </div>
+        </div>
+    </div>
+    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-200 dark:border-slate-700 p-5 card-hover">
+        <div class="flex items-start justify-between">
+            <div>
+                <p class="text-3xl font-extrabold text-green-600">{{ active_races }}</p>
+                <p class="text-sm text-gray-500 dark:text-slate-400 mt-1">Gare confermate</p>
+            </div>
+            <div class="size-10 rounded-xl bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+                {{ icon_check_circle(class="size-5 text-green-600 dark:text-green-400") }}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-200 dark:border-slate-700 p-6">
+        <h2 class="text-lg font-bold text-gray-900 dark:text-white mb-4">Partecipazione per membro</h2>
+        <div class="overflow-x-auto">
+            <table class="min-w-full text-sm">
+                <thead>
+                    <tr class="border-b border-gray-100 dark:border-slate-700">
+                        <th class="text-left py-2.5 font-semibold text-gray-500 dark:text-slate-400">Nome</th>
+                        <th class="text-center py-2.5 font-semibold text-green-600">SI</th>
+                        <th class="text-center py-2.5 font-semibold text-red-600">NO</th>
+                        <th class="text-center py-2.5 font-semibold text-yellow-600">?</th>
+                        <th class="text-center py-2.5 font-semibold text-gray-500 dark:text-slate-400">% SI</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ms in member_stats %}
+                    <tr class="border-b border-gray-50 dark:border-slate-700/50 hover:bg-gray-50 dark:hover:bg-slate-700/30 transition-colors">
+                        <td class="py-2.5 font-medium text-gray-900 dark:text-white">{{ ms.nome }}</td>
+                        <td class="text-center text-green-700 dark:text-green-400 font-semibold">{{ ms.si_count or 0 }}</td>
+                        <td class="text-center text-red-600 dark:text-red-400">{{ ms.no_count or 0 }}</td>
+                        <td class="text-center text-yellow-600 dark:text-yellow-400">{{ ms.indeciso_count or 0 }}</td>
+                        <td class="text-center">
+                            <span class="inline-flex px-2 py-0.5 rounded-lg text-xs font-bold {% if ms.totale > 0 and (ms.si_count or 0) / ms.totale * 100 >= 50 %}bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400{% else %}bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-400{% endif %}">
+                                {% if ms.totale > 0 %}{{ "%.0f"|format((ms.si_count or 0) / ms.totale * 100) }}%{% else %}—{% endif %}
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-200 dark:border-slate-700 p-6">
+        <h2 class="text-lg font-bold text-gray-900 dark:text-white mb-4">Partecipazione per gara</h2>
+        <div class="overflow-x-auto">
+            <table class="min-w-full text-sm">
+                <thead>
+                    <tr class="border-b border-gray-100 dark:border-slate-700">
+                        <th class="text-left py-2.5 font-semibold text-gray-500 dark:text-slate-400">Gara</th>
+                        <th class="text-center py-2.5 font-semibold text-green-600">SI</th>
+                        <th class="text-center py-2.5 font-semibold text-red-600">NO</th>
+                        <th class="text-center py-2.5 font-semibold text-yellow-600">?</th>
+                        <th class="text-center py-2.5 font-semibold text-gray-500 dark:text-slate-400">Stato</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for rs in race_stats %}
+                    <tr class="border-b border-gray-50 dark:border-slate-700/50 hover:bg-gray-50 dark:hover:bg-slate-700/30 transition-colors">
+                        <td class="py-2.5 font-medium text-gray-900 dark:text-white text-sm max-w-[200px] truncate" title="{{ rs.descrizione }}">
+                            <div class="flex items-center space-x-2">
+                                {{ icon_calendar(class="size-3.5 text-gray-400 shrink-0") }}
+                                <span>{{ rs.descrizione or '—' }}</span>
+                            </div>
+                        </td>
+                        <td class="text-center text-green-700 dark:text-green-400 font-semibold">{{ rs.si_count or 0 }}</td>
+                        <td class="text-center text-red-600 dark:text-red-400">{{ rs.no_count or 0 }}</td>
+                        <td class="text-center text-yellow-600 dark:text-yellow-400">{{ rs.indeciso_count or 0 }}</td>
+                        <td class="text-center">
+                            <span class="inline-flex px-2 py-0.5 rounded-lg text-xs font-medium
+                                {% if rs.stato == 'Confermato' %}bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400
+                                {% elif rs.stato == 'Annullato' %}bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400
+                                {% else %}bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400{% endif %}">
+                                {{ rs.stato }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

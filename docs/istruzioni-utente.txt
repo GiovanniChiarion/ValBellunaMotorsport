@@ -1,0 +1,70 @@
+==============================================
+  CALENDARIO KART — ISTRUZIONI PER L'UTENTE
+==============================================
+
+1. ACCESSO
+----------
+  - Apri il browser all'indirizzo dell'applicazione.
+  - Clicca "Login" e inserisci email e password fornite dall'admin.
+  - Se non hai ancora un account, chiedi all'admin un token di
+    registrazione e usa il link /auth/register?token=... per
+    creare il tuo account (nome, email, password).
+
+2. DASHBOARD — CALENDARIO GARE
+-------------------------------
+  Dopo il login vedi l'elenco delle gare per l'anno corrente.
+  Ogni gara mostra:
+    - Data inizio e data fine (se multi-giorno)
+    - Descrizione e tipo gara
+    - Stato (Confermato / Annullato / In attesa di conferma)
+    - Scadenza conferma (entro quando devi rispondere)
+    - La tua partecipazione (SI / NO / INDECISO)
+    - Quante persone hanno detto SI e quante portano la macchina
+  Puoi cambiare anno con il selettore in alto.
+
+3. PARTECIPAZIONE A UNA GARA
+-----------------------------
+  Per ogni gara puoi scegliere tra 3 stati:
+    - SI       : partecipero'
+    - NO       : non partecipero'
+    - INDECISO : non ho ancora deciso
+
+  Clicca il pulsante corrispondente nella riga della gara
+  sulla dashboard. La risposta viene salvata immediatamente.
+
+  ATTENZIONE: una volta passata la "scadenza conferma" della
+  gara, non puoi piu' modificare la tua risposta. Se hai un
+  imprevisto, contatta l'admin.
+
+4. FLAG "PORTO LA MACCHINA"
+----------------------------
+  Nella riga della gara c'e' un pulsante (spunta) per indicare
+  se porterai la macchina. Utile per organizzare i passaggi.
+  Vale solo se hai risposto SI.
+
+5. NOTA PERSONALE
+------------------
+  Puoi aggiungere una nota privata per ogni gara (es. "parto
+  da casa alle 7", "ho bisogno di un passaggio").
+  Si modifica dalla pagina di dettaglio della gara o dalla
+  dashboard.
+
+6. DETTAGLIO GARA
+------------------
+   Clicca sulla descrizione di una gara per vedere:
+     - Dettagli completi (date, tipo, stato, scadenza, note auto)
+     - Lista di tutti i partecipanti attivi con il loro stato
+     - Chi ha detto SI e chi porta la macchina
+     - Se sei admin, pulsanti extra per la gestione
+
+7. IMPOSTAZIONI PROFILO
+------------------------
+   Clicca "Impostazioni" nel menu in alto (icona ingranaggio)
+   per aprire la pagina dove puoi:
+     - Cambiare la tua email (inserisci la password per confermare)
+     - Cambiare la tua password (inserisci password attuale + nuova
+       password due volte)
+
+8. LOGOUT
+----------
+  Clicca "Logout" nel menu in alto. Il cookie viene rimosso.

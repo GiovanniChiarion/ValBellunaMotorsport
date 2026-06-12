@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block title %}Tipi Gara — CalendarioKart{% endblock %}
+{% block content %}
+{% from '_icons.html' import icon_tag, icon_plus, icon_trash, icon_arrow_left %}
+
+<div class="max-w-2xl mx-auto">
+  <a href="/races/admin/dashboard" class="inline-flex items-center text-sm font-medium text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white mb-6 transition-colors">
+    {{ icon_arrow_left(class="size-4 mr-1") }}
+    Torna alla dashboard
+  </a>
+
+  <div class="flex items-center space-x-3 mb-6">
+    <div class="size-10 rounded-xl bg-purple-100 dark:bg-purple-900/20 flex items-center justify-center">
+      {{ icon_tag(class="size-5 text-purple-600 dark:text-purple-400") }}
+    </div>
+    <h1 class="text-2xl font-extrabold tracking-tight text-gray-900 dark:text-white">Tipi Gara</h1>
+  </div>
+
+  <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-200 dark:border-slate-700 p-6 mb-6">
+    <h2 class="text-lg font-bold text-gray-900 dark:text-white mb-4">Nuovo tipo</h2>
+    <form id="type-form" class="space-y-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-1.5">Codice *</label>
+          <input type="text" name="codice" required maxlength="20" placeholder="Es. SPRINT" class="w-full rounded-xl border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-3 py-2.5 text-sm font-mono uppercase placeholder:font-sans placeholder:normal-case focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 dark:text-white transition-colors duration-150">
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-1.5">Descrizione</label>
+          <input type="text" name="descrizione" placeholder="Gara Sprint" class="w-full rounded-xl border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-3 py-2.5 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 dark:text-white transition-colors duration-150">
+        </div>
+      </div>
+      <button type="submit" class="inline-flex items-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-medium shadow-sm transition-all duration-150">
+        {{ icon_plus(class="size-4 mr-1.5") }}
+        Crea
+      </button>
+    </form>
+  </div>
+
+  <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-200 dark:border-slate-700 overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200 dark:divide-slate-700">
+        <thead class="bg-gray-50 dark:bg-slate-800/50">
+          <tr>
+            <th class="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400">Codice</th>
+            <th class="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400">Descrizione</th>
+            <th class="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400">Azioni</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100 dark:divide-slate-700/50">
+          {% for rt in race_types %}
+          <tr class="hover:bg-gray-50 dark:hover:bg-slate-700/30 transition-colors duration-150">
+            <td class="px-4 py-3.5 text-sm font-mono font-bold text-gray-900 dark:text-white">{{ rt.codice }}</td>
+            <td class="px-4 py-3.5 text-sm text-gray-500 dark:text-slate-400">{{ rt.descrizione or '' }}</td>
+            <td class="px-4 py-3.5 text-sm">
+              <button onclick="deleteType({{ rt.id }})" class="inline-flex items-center px-3 py-1.5 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-xl text-xs font-medium border border-red-200 dark:border-red-800 transition-all duration-150">
+                {{ icon_trash(class="size-3 mr-1") }}
+                Elimina
+              </button>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+document.getElementById('type-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const f = e.target;
+  const token = localStorage.getItem('token');
+  const res = await fetch('/races/admin/types', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+    body: JSON.stringify({ codice: f.codice.value, descrizione: f.descrizione.value })
+  });
+  if (res.ok) { window.location.reload(); }
+  else { const err = await res.json(); showToast(err.detail || 'Errore', 'error'); }
+});
+
+function deleteType(id) {
+  if (!confirm('Eliminare questo tipo gara?')) return;
+  const token = localStorage.getItem('token');
+  fetch(`/races/admin/types/${id}/delete`, {
+    method: 'POST', headers: { 'Authorization': `Bearer ${token}` }
+  }).then(r => { if (r.ok) window.location.reload(); });
+}
+</script>
+{% endblock %}

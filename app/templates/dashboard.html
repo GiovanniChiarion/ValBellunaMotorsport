@@ -1,0 +1,247 @@
+{% extends "base.html" %}
+{% block title %}Calendario {{ year }} — CalendarioKart{% endblock %}
+{% block content %}
+{% from '_icons.html' import icon_chevron_left, icon_chevron_right, icon_chevron_down, icon_check_circle, icon_x_circle, icon_question_mark_circle, icon_car, icon_calendar, icon_tag, icon_note, icon_plus, icon_key, icon_spinner, icon_flag, icon_alert %}
+
+<div x-data="{ year: {{ year }} }">
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
+        <div class="flex items-center space-x-3">
+            <span class="text-red-600">{{ icon_flag(class="size-7 text-red-600") }}</span>
+            <h1 class="text-2xl font-extrabold tracking-tight text-gray-900 dark:text-white">Calendario {{ year }}</h1>
+        </div>
+        <div class="flex items-center space-x-2">
+            <div class="flex items-center bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl shadow-sm overflow-hidden">
+                <button @click="year = year - 1; window.location = '/races?year=' + year" class="p-2.5 text-gray-500 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors" title="Anno precedente">
+                    {{ icon_chevron_left(class="size-4") }}
+                </button>
+                <select x-model="year" @change="window.location = '/races?year=' + $el.value" class="border-x border-gray-200 dark:border-slate-700 px-4 py-2.5 text-sm font-medium bg-transparent text-gray-700 dark:text-slate-300 focus:outline-none">
+                    {% for y in years %}
+                    <option value="{{ y }}" {% if y == year %}selected{% endif %}>{{ y }}</option>
+                    {% endfor %}
+                </select>
+                <button @click="year = year + 1; window.location = '/races?year=' + year" class="p-2.5 text-gray-500 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors" title="Anno successivo">
+                    {{ icon_chevron_right(class="size-4") }}
+                </button>
+            </div>
+        </div>
+    </div>
+
+    {% if current_user.ruolo in ('admin', 'superadmin') %}
+    <div class="flex flex-wrap items-center gap-2 mb-6">
+        <a href="/races/admin/new" class="inline-flex items-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-medium shadow-sm transition-all duration-150">
+            {{ icon_plus(class="size-4 mr-1.5") }}
+            Nuova gara
+        </a>
+        <a href="/auth/admin/tokens" class="inline-flex items-center px-4 py-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 rounded-xl text-sm font-medium shadow-sm transition-all duration-150">
+            {{ icon_key(class="size-4 mr-1.5") }}
+            Token invito
+        </a>
+        {% if current_user.ruolo == 'superadmin' %}
+        <div x-data="{ modal: false, gare: true, utenti: true, logs: true }">
+            <button @click="modal = true" class="inline-flex items-center px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-xl text-sm font-medium shadow-sm transition-all duration-150">
+                <svg class="size-4 mr-1.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
+                Backup / Ripristina
+            </button>
+            <template x-teleport="body">
+                <div x-show="modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" @click.self="modal = false" x-cloak>
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 w-full max-w-md shadow-xl border border-gray-200 dark:border-slate-700">
+                        <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">Backup dati</h3>
+                        <p class="text-sm text-gray-500 dark:text-slate-400 mb-4">Seleziona le sezioni da esportare o carica un file JSON per ripristinare.</p>
+
+                        <label class="flex items-center space-x-3 mb-2 cursor-pointer">
+                            <input type="checkbox" x-model="gare" class="rounded border-gray-300 dark:border-slate-600 text-violet-600 focus:ring-violet-500">
+                            <span class="text-sm font-medium text-gray-700 dark:text-slate-300">Gare e partecipazioni</span>
+                        </label>
+                        <label class="flex items-center space-x-3 mb-2 cursor-pointer">
+                            <input type="checkbox" x-model="utenti" class="rounded border-gray-300 dark:border-slate-600 text-violet-600 focus:ring-violet-500">
+                            <span class="text-sm font-medium text-gray-700 dark:text-slate-300">Anagrafica utenti</span>
+                        </label>
+                        <label class="flex items-center space-x-3 mb-4 cursor-pointer">
+                            <input type="checkbox" x-model="logs" class="rounded border-gray-300 dark:border-slate-600 text-violet-600 focus:ring-violet-500">
+                            <span class="text-sm font-medium text-gray-700 dark:text-slate-300">Log delle modifiche</span>
+                        </label>
+
+                        <div class="flex flex-col gap-3">
+                            <a :href="'/races/admin/export?include=' + (gare ? 'gare,' : '') + (utenti ? 'utenti,' : '') + (logs ? 'logs' : '')"
+                               class="inline-flex items-center justify-center px-4 py-2.5 bg-violet-600 hover:bg-violet-700 text-white rounded-xl text-sm font-medium shadow-sm transition-all duration-150">
+                                <svg class="size-4 mr-1.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
+                                Scarica JSON
+                            </a>
+                            <div class="relative">
+                                <form method="POST" action="/races/admin/import" enctype="multipart/form-data" id="import-form-modal">
+                                    <input type="file" name="file" accept=".json" onchange="var f=this.closest('form');var fd=new FormData(f);var t=localStorage.getItem('token');fetch('/races/admin/import',{method:'POST',headers:{'Authorization':'Bearer '+t},body:fd}).then(function(r){return r.json()}).then(function(d){showToast(d.message||d.error,d.message?'success':'error')}).catch(function(){showToast('Errore di connessione','error')})" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                                </form>
+                                <div class="inline-flex items-center justify-center w-full px-4 py-2.5 bg-white dark:bg-slate-700 border-2 border-dashed border-gray-300 dark:border-slate-600 text-gray-500 dark:text-slate-400 rounded-xl text-sm font-medium">
+                                    <svg class="size-4 mr-1.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M7.5 12l4.5-4.5m0 0l4.5 4.5M12 7.5V21"/></svg>
+                                    Carica e ripristina
+                                </div>
+                            </div>
+                        </div>
+
+                        <button @click="modal = false" class="mt-4 w-full px-4 py-2 text-sm font-medium text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200 transition-colors">
+                            Annulla
+                        </button>
+                    </div>
+                </div>
+            </template>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <div class="space-y-3">
+        {% for race in races %}
+        {% set p = participations.get(race.id) %}
+        {% set my_status = p.status if p else 'indeciso' %}
+        {% set my_car = p.con_macchina if p else 0 %}
+        {% set my_note = p.nota_personale if p else '' %}
+        {% set car_count = macchina_counts.get(race.id, 0) %}
+        {% set start_date = race.data_inizio.strftime('%d/%m/%Y') if race.data_inizio else '' %}
+        {% set end_date = race.data_fine.strftime('%d/%m/%Y') if race.data_fine else '' %}
+
+        <div class="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm card-hover" x-data="{ open: false }">
+            <div class="px-5 py-4 flex items-center cursor-pointer gap-4" @click="open = !open">
+                <div class="hidden sm:flex flex-col items-center justify-center min-w-[60px]">
+                    <span class="text-2xl font-extrabold text-gray-900 dark:text-white leading-none">
+                        {{ race.data_inizio.strftime('%d') if race.data_inizio else '--' }}
+                    </span>
+                    <span class="text-xs font-semibold uppercase text-gray-500 dark:text-slate-400 mt-0.5">
+                        {{ race.data_inizio.strftime('%b') if race.data_inizio else '' }}
+                    </span>
+                    <span class="text-[10px] font-medium text-gray-400 dark:text-slate-500">
+                        {{ race.data_inizio.strftime('%Y') if race.data_inizio else '' }}
+                    </span>
+                </div>
+
+                <div class="min-w-[3px] self-stretch bg-red-600 rounded-full"></div>
+
+                <div class="flex-1 min-w-0">
+                    <h3 class="text-base font-bold text-gray-900 dark:text-white truncate">{{ race.descrizione }}</h3>
+                    <div class="flex flex-wrap items-center gap-1.5 mt-1">
+                        <span class="inline-flex items-center text-xs text-gray-500 dark:text-slate-400">
+                            {{ icon_calendar(class="size-3.5 mr-0.5") }}
+                            {{ start_date }}{% if end_date and end_date != start_date %} — {{ end_date }}{% endif %}
+                        </span>
+                        {% if race.tipo_gara %}
+                        <span class="inline-flex items-center text-[11px] font-semibold uppercase tracking-wider bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300 px-2 py-0.5 rounded-md">
+                            {{ icon_tag(class="size-3 mr-0.5") }}
+                            {{ race.tipo_gara }}
+                        </span>
+                        {% endif %}
+                        {% if car_count > 0 %}
+                        <span class="inline-flex items-center text-[11px] font-medium bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 px-2 py-0.5 rounded-md">
+                            {{ icon_car(class="size-3 mr-0.5") }}
+                            {{ car_count }}
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="flex items-center space-x-3">
+                    {% set status_colors = {'si': 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-green-200 dark:border-green-700', 'no': 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 border-red-200 dark:border-red-700', 'indeciso': 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 border-yellow-200 dark:border-yellow-700'} %}
+                    {% set status_bg = {'si': 'bg-green-600', 'no': 'bg-red-600', 'indeciso': 'bg-yellow-500'} %}
+                    <span class="inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg text-xs font-bold border {{ status_colors[my_status] }}">
+                        {% if my_status == 'si' %}
+                        {{ icon_check_circle(class="size-3.5") }}
+                        {% elif my_status == 'no' %}
+                        {{ icon_x_circle(class="size-3.5") }}
+                        {% else %}
+                        {{ icon_question_mark_circle(class="size-3.5") }}
+                        {% endif %}
+                        <span>{{ my_status|upper }}</span>
+                    </span>
+                    <div class="text-gray-300 dark:text-slate-600 transition-transform duration-200" :class="open ? 'rotate-180' : ''">
+                        {{ icon_chevron_down(class="size-5") }}
+                    </div>
+                </div>
+            </div>
+
+            <div x-show="open" x-collapse.duration.300ms class="border-t border-gray-100 dark:border-slate-700/50">
+                <div class="px-5 py-4 space-y-4" hx-headers='{"Authorization": "Bearer " + localStorage.getItem("token")}'>
+                    <div class="flex flex-wrap items-center gap-1.5">
+                        <button hx-post="/participation/{{ race.id }}?status=si" hx-swap="none" hx-on::after-request="location.reload()"
+                                class="btn-status inline-flex items-center space-x-1.5 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-150 {% if my_status == 'si' %}bg-green-600 text-white shadow-sm shadow-green-600/20{% else %}border-2 border-green-500 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20{% endif %}">
+                            {{ icon_check_circle(class="size-4 btn-status-icon") }}
+                            <span class="btn-text">SI</span>
+                        </button>
+                        <button hx-post="/participation/{{ race.id }}?status=no" hx-swap="none" hx-on::after-request="location.reload()"
+                                class="btn-status inline-flex items-center space-x-1.5 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-150 {% if my_status == 'no' %}bg-red-600 text-white shadow-sm shadow-red-600/20{% else %}border-2 border-gray-300 dark:border-slate-600 text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-700{% endif %}">
+                            {{ icon_x_circle(class="size-4 btn-status-icon") }}
+                            <span class="btn-text">NO</span>
+                        </button>
+                        <button hx-post="/participation/{{ race.id }}?status=indeciso" hx-swap="none" hx-on::after-request="location.reload()"
+                                class="btn-status inline-flex items-center space-x-1.5 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-150 {% if my_status == 'indeciso' %}bg-yellow-500 text-white shadow-sm shadow-yellow-500/20{% else %}border-2 border-yellow-500 text-yellow-600 dark:text-yellow-400 hover:bg-yellow-50 dark:hover:bg-yellow-900/20{% endif %}">
+                            {{ icon_question_mark_circle(class="size-4 btn-status-icon") }}
+                            <span class="btn-text">?</span>
+                        </button>
+
+                        <span class="mx-1 text-gray-200 dark:text-slate-600">|</span>
+
+                        <label class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium cursor-pointer select-none transition-colors duration-150 {% if my_car %}bg-gray-100 dark:bg-slate-700{% else %}hover:bg-gray-50 dark:hover:bg-slate-700/50{% endif %}">
+                            <input type="checkbox" {% if my_car %}checked{% endif %}
+                                   hx-post="/participation/{{ race.id }}/macchina?con_macchina={% if my_car %}0{% else %}1{% endif %}"
+                                   hx-swap="none" hx-on::after-request="location.reload()"
+                                   class="rounded border-gray-300 dark:border-slate-600 text-red-600 focus:ring-red-500">
+                            {{ icon_car(class="size-4 text-gray-500 dark:text-slate-400") }}
+                            <span class="text-gray-700 dark:text-slate-300 {% if my_car %}font-semibold{% endif %}">Macchina</span>
+                        </label>
+                    </div>
+
+                    {% if race.note_auto %}
+                    <div class="flex items-start space-x-2 bg-gray-50 dark:bg-slate-700/50 rounded-xl px-4 py-3">
+                        {{ icon_car(class="size-4 text-gray-500 dark:text-slate-400 mt-0.5 shrink-0") }}
+                        <div>
+                            <span class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400">Auto:</span>
+                            <p class="text-sm text-gray-700 dark:text-slate-300 mt-0.5">{{ race.note_auto }}</p>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div>
+                        <div class="relative">
+                            {{ icon_note(class="size-4 absolute left-3 top-2.5 text-gray-400") }}
+                            <textarea placeholder="Nota personale (opzionale)"
+                                      hx-post="/participation/{{ race.id }}/nota?nota_personale="
+                                      hx-trigger="blur, change"
+                                      hx-swap="none"
+                                      hx-params="nota_personale"
+                                      hx-on::after-request="showCopyToast('Nota salvata', 'info')"
+                                      class="w-full text-sm bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-xl px-10 py-2.5 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 dark:text-white placeholder:text-gray-400 resize-none transition-colors duration-150"
+                                      rows="1">{{ my_note }}</textarea>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between">
+                        {% if race.scadenza_conferma %}
+                        <span class="inline-flex items-center text-xs text-gray-400 dark:text-slate-500">
+                            {{ icon_alert(class="size-3 mr-0.5") }}
+                            Conferma entro: {{ race.scadenza_conferma.strftime('%d/%m/%Y') }}
+                        </span>
+                        {% else %}
+                        <span></span>
+                        {% endif %}
+                        <a href="/races/{{ race.id }}" class="inline-flex items-center text-xs font-medium text-red-600 hover:text-red-700 hover:underline">
+                            Dettaglio
+                            <svg class="size-3 ml-0.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/></svg>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="text-center py-20">
+            <div class="inline-flex items-center justify-center size-16 bg-gray-100 dark:bg-slate-700 rounded-2xl mb-4">
+                {{ icon_calendar(class="size-8 text-gray-400 dark:text-slate-500") }}
+            </div>
+            <p class="text-lg font-semibold text-gray-500 dark:text-slate-400">Nessuna gara per {{ year }}</p>
+            {% if current_user.ruolo in ('admin', 'superadmin') %}
+            <a href="/races/admin/new" class="mt-4 inline-flex items-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-medium transition-all duration-150">
+                {{ icon_plus(class="size-4 mr-1.5") }}
+                Crea la prima gara
+            </a>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

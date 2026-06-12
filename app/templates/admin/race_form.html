@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block title %}{% if race %}Modifica{% else %}Nuova{% endif %} Gara — CalendarioKart{% endblock %}
+{% block content %}
+{% from '_icons.html' import icon_flag, icon_pencil, icon_plus, icon_tag, icon_car, icon_arrow_left %}
+
+<div class="max-w-2xl mx-auto">
+    <a href="/races/admin/list" class="inline-flex items-center text-sm font-medium text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white mb-6 transition-colors">
+        {{ icon_arrow_left(class="size-4 mr-1") }}
+        Torna all'elenco
+    </a>
+
+    <div class="flex items-center space-x-3 mb-6">
+        <div class="size-10 rounded-xl bg-red-100 dark:bg-red-900/20 flex items-center justify-center">
+            {{ icon_flag(class="size-5 text-red-600 dark:text-red-400") }}
+        </div>
+        <h1 class="text-2xl font-extrabold tracking-tight text-gray-900 dark:text-white">{% if race %}Modifica{% else %}Nuova{% endif %} Gara</h1>
+    </div>
+
+    <form id="race-form" class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-200 dark:border-slate-700 p-6 sm:p-8 space-y-5">
+        <div>
+            <label class="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-1.5">Descrizione *</label>
+            <input type="text" name="descrizione" required value="{{ race.descrizione if race else '' }}" placeholder="Nome della gara" class="w-full rounded-xl border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-3 py-2.5 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 dark:text-white transition-colors duration-150">
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-1.5">Data inizio</label>
+                <input type="date" name="data_inizio" value="{{ race.data_inizio.strftime('%Y-%m-%d') if race and race.data_inizio else '' }}" class="w-full rounded-xl border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 dark:text-white transition-colors duration-150">
+            </div>
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-1.5">Data fine</label>
+                <input type="date" name="data_fine" value="{{ race.data_fine.strftime('%Y-%m-%d') if race and race.data_fine else '' }}" class="w-full rounded-xl border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 dark:text-white transition-colors duration-150">
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-1.5">Tipo gara</label>
+                <select name="tipo_gara" class="w-full rounded-xl border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 dark:text-white transition-colors duration-150">
+                    <option value="">—</option>
+                    {% for rt in race_types %}
+                    <option value="{{ rt.codice }}" {% if race and race.tipo_gara == rt.codice %}selected{% endif %}>{{ rt.codice }}{% if rt.descrizione %} — {{ rt.descrizione }}{% endif %}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-1.5">Stato</label>
+                <select name="stato" class="w-full rounded-xl border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 dark:text-white transition-colors duration-150">
+                    <option value="In attesa di conferma" {% if race and race.stato == 'In attesa di conferma' %}selected{% endif %}>In attesa di conferma</option>
+                    <option value="Confermato" {% if race and race.stato == 'Confermato' %}selected{% endif %}>Confermato</option>
+                    <option value="Annullato" {% if race and race.stato == 'Annullato' %}selected{% endif %}>Annullato</option>
+                </select>
+            </div>
+        </div>
+
+        <div>
+            <label class="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-1.5">Scadenza conferma</label>
+            <input type="date" name="scadenza_conferma" value="{{ race.scadenza_conferma.strftime('%Y-%m-%d') if race and race.scadenza_conferma else '' }}" class="w-full rounded-xl border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 dark:text-white transition-colors duration-150">
+        </div>
+
+        <div>
+            <label class="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-1.5">Note auto</label>
+            <div class="relative">
+                <span class="absolute left-3 top-3 text-gray-400">{{ icon_car(class="size-4") }}</span>
+                <textarea name="note_auto" rows="2" placeholder="Info sull'auto da portare..." class="w-full rounded-xl border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 pl-10 pr-3 py-2.5 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 dark:text-white resize-none transition-colors duration-150">{{ race.note_auto if race else '' }}</textarea>
+            </div>
+        </div>
+
+        <div class="flex items-center space-x-3 pt-2">
+            <button type="submit" class="inline-flex items-center px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-semibold shadow-sm transition-all duration-150">
+                {% if race %}{{ icon_pencil(class="size-4 mr-1.5") }}Salva{% else %}{{ icon_plus(class="size-4 mr-1.5") }}Crea{% endif %}
+            </button>
+            <a href="/races/admin/list" class="inline-flex items-center px-6 py-2.5 bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300 hover:bg-gray-200 dark:hover:bg-slate-600 rounded-xl text-sm font-medium transition-all duration-150">Annulla</a>
+        </div>
+    </form>
+</div>
+
+<script>
+document.getElementById('race-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const form = e.target;
+    const token = localStorage.getItem('token');
+    const isEdit = {% if race %}true{% else %}false{% endif %};
+    const url = isEdit ? '/races/{{ race.id }}/edit' : '/races';
+
+    const data = {
+        descrizione: form.descrizione.value,
+        data_inizio: form.data_inizio.value || null,
+        data_fine: form.data_fine.value || null,
+        tipo_gara: form.tipo_gara.value || null,
+        stato: form.stato.value,
+        scadenza_conferma: form.scadenza_conferma.value || null,
+        note_auto: form.note_auto.value || null,
+    };
+
+    const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify(data)
+    });
+
+    if (res.ok) {
+        window.location.href = '/races/admin/list';
+    } else {
+        const err = await res.json();
+        showToast(err.detail || 'Errore', 'error');
+    }
+});
+</script>
+{% endblock %}

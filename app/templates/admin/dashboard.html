@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard — CalendarioKart{% endblock %}
+{% block content %}
+{% from '_icons.html' import icon_flag, icon_users, icon_chart_bar, icon_clock, icon_key, icon_tag, icon_calendar, icon_pencil %}
+
+<div class="max-w-4xl mx-auto">
+  <div class="flex items-center space-x-3 mb-8">
+    <div class="size-10 rounded-xl bg-red-600 flex items-center justify-center">
+      <svg class="size-5 text-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z"/></svg>
+    </div>
+    <h1 class="text-2xl font-extrabold tracking-tight text-gray-900 dark:text-white">Admin Dashboard</h1>
+  </div>
+
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-200 dark:border-slate-700 p-5 card-hover">
+      <div class="flex items-start justify-between">
+        <div>
+          <p class="text-3xl font-extrabold text-gray-900 dark:text-white">{{ active_members }}</p>
+          <p class="text-sm text-gray-500 dark:text-slate-400 mt-1">Membri attivi</p>
+        </div>
+        <div class="size-10 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+          {{ icon_users(class="size-5 text-blue-600 dark:text-blue-400") }}
+        </div>
+      </div>
+    </div>
+    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-200 dark:border-slate-700 p-5 card-hover">
+      <div class="flex items-start justify-between">
+        <div>
+          <p class="text-3xl font-extrabold text-purple-600">{{ admin_count }}</p>
+          <p class="text-sm text-gray-500 dark:text-slate-400 mt-1">Admin</p>
+        </div>
+        <div class="size-10 rounded-xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+          <svg class="size-5 text-purple-600 dark:text-purple-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
+        </div>
+      </div>
+    </div>
+    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-200 dark:border-slate-700 p-5 card-hover">
+      <div class="flex items-start justify-between">
+        <div>
+          <p class="text-3xl font-extrabold text-green-600">{{ total_races }}</p>
+          <p class="text-sm text-gray-500 dark:text-slate-400 mt-1">Gare totali</p>
+        </div>
+        <div class="size-10 rounded-xl bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+          {{ icon_flag(class="size-5 text-green-600 dark:text-green-400") }}
+        </div>
+      </div>
+    </div>
+    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-200 dark:border-slate-700 p-5 card-hover">
+      <div class="flex items-start justify-between">
+        <div>
+          <p class="text-3xl font-extrabold text-gray-600 dark:text-slate-300">{{ total_members }}</p>
+          <p class="text-sm text-gray-500 dark:text-slate-400 mt-1">Utenti totali</p>
+        </div>
+        <div class="size-10 rounded-xl bg-gray-100 dark:bg-slate-700 flex items-center justify-center">
+          <svg class="size-5 text-gray-500 dark:text-slate-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/></svg>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h2 class="text-lg font-bold text-gray-900 dark:text-white mb-4">Gestione rapida</h2>
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <a href="/races/admin/list" class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-200 dark:border-slate-700 p-5 card-hover flex items-center space-x-4">
+      <div class="size-12 rounded-xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center shrink-0">
+        {{ icon_flag(class="size-6 text-red-600") }}
+      </div>
+      <div><p class="font-bold text-gray-900 dark:text-white">Gare</p><p class="text-sm text-gray-500 dark:text-slate-400">Crea, modifica, elimina gare</p></div>
+    </a>
+    <a href="/races/admin/members" class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-200 dark:border-slate-700 p-5 card-hover flex items-center space-x-4">
+      <div class="size-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center shrink-0">
+        {{ icon_users(class="size-6 text-blue-600") }}
+      </div>
+      <div><p class="font-bold text-gray-900 dark:text-white">Membri</p><p class="text-sm text-gray-500 dark:text-slate-400">Gestisci ruoli e accessi</p></div>
+    </a>
+    <a href="/races/admin/types" class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-200 dark:border-slate-700 p-5 card-hover flex items-center space-x-4">
+      <div class="size-12 rounded-xl bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center shrink-0">
+        {{ icon_tag(class="size-6 text-purple-600") }}
+      </div>
+      <div><p class="font-bold text-gray-900 dark:text-white">Tipi Gara</p><p class="text-sm text-gray-500 dark:text-slate-400">Crea nuovi tipi di gara</p></div>
+    </a>
+    <a href="/auth/admin/tokens" class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-200 dark:border-slate-700 p-5 card-hover flex items-center space-x-4">
+      <div class="size-12 rounded-xl bg-yellow-50 dark:bg-yellow-900/20 flex items-center justify-center shrink-0">
+        {{ icon_key(class="size-6 text-yellow-600") }}
+      </div>
+      <div><p class="font-bold text-gray-900 dark:text-white">Token Invito</p><p class="text-sm text-gray-500 dark:text-slate-400">Genera e gestisci chiavi di accesso</p></div>
+    </a>
+    <a href="/reports" class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-200 dark:border-slate-700 p-5 card-hover flex items-center space-x-4">
+      <div class="size-12 rounded-xl bg-green-50 dark:bg-green-900/20 flex items-center justify-center shrink-0">
+        {{ icon_chart_bar(class="size-6 text-green-600") }}
+      </div>
+      <div><p class="font-bold text-gray-900 dark:text-white">Report</p><p class="text-sm text-gray-500 dark:text-slate-400">Statistiche partecipazione</p></div>
+    </a>
+    <a href="/history" class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-200 dark:border-slate-700 p-5 card-hover flex items-center space-x-4">
+      <div class="size-12 rounded-xl bg-orange-50 dark:bg-orange-900/20 flex items-center justify-center shrink-0">
+        {{ icon_clock(class="size-6 text-orange-600") }}
+      </div>
+      <div><p class="font-bold text-gray-900 dark:text-white">Storico</p><p class="text-sm text-gray-500 dark:text-slate-400">Log delle modifiche</p></div>
+    </a>
+
+    {% if current_user.ruolo == 'superadmin' %}
+    <div x-data="{ modal: false, gare: true, utenti: true, logs: true }">
+      <div @click="modal = true" class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-200 dark:border-slate-700 p-5 card-hover flex items-center space-x-4 cursor-pointer">
+        <div class="size-12 rounded-xl bg-teal-50 dark:bg-teal-900/20 flex items-center justify-center shrink-0">
+          <svg class="size-6 text-teal-600 dark:text-teal-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
+        </div>
+        <div><p class="font-bold text-gray-900 dark:text-white">Backup / Ripristina</p><p class="text-sm text-gray-500 dark:text-slate-400">Esportazione selettiva e ripristino dati</p></div>
+      </div>
+
+      <template x-teleport="body">
+        <div x-show="modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" @click.self="modal = false" x-cloak>
+          <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 w-full max-w-md shadow-xl border border-gray-200 dark:border-slate-700">
+            <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">Backup dati</h3>
+            <p class="text-sm text-gray-500 dark:text-slate-400 mb-4">Seleziona le sezioni da esportare o carica un file JSON per ripristinare.</p>
+
+            <label class="flex items-center space-x-3 mb-2 cursor-pointer">
+              <input type="checkbox" x-model="gare" class="rounded border-gray-300 dark:border-slate-600 text-violet-600 focus:ring-violet-500">
+              <span class="text-sm font-medium text-gray-700 dark:text-slate-300">Gare e partecipazioni</span>
+            </label>
+            <label class="flex items-center space-x-3 mb-2 cursor-pointer">
+              <input type="checkbox" x-model="utenti" class="rounded border-gray-300 dark:border-slate-600 text-violet-600 focus:ring-violet-500">
+              <span class="text-sm font-medium text-gray-700 dark:text-slate-300">Anagrafica utenti</span>
+            </label>
+            <label class="flex items-center space-x-3 mb-4 cursor-pointer">
+              <input type="checkbox" x-model="logs" class="rounded border-gray-300 dark:border-slate-600 text-violet-600 focus:ring-violet-500">
+              <span class="text-sm font-medium text-gray-700 dark:text-slate-300">Log delle modifiche</span>
+            </label>
+
+            <div class="flex flex-col gap-3">
+              <a :href="'/races/admin/export?include=' + (gare ? 'gare,' : '') + (utenti ? 'utenti,' : '') + (logs ? 'logs' : '')"
+                 class="inline-flex items-center justify-center px-4 py-2.5 bg-violet-600 hover:bg-violet-700 text-white rounded-xl text-sm font-medium shadow-sm transition-all duration-150">
+                <svg class="size-4 mr-1.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
+                Scarica JSON
+              </a>
+              <div class="relative">
+                <form method="POST" action="/races/admin/import" enctype="multipart/form-data" id="import-form-admin">
+                  <input type="file" name="file" accept=".json" onchange="var f=this.closest('form');var fd=new FormData(f);var t=localStorage.getItem('token');fetch('/races/admin/import',{method:'POST',headers:{'Authorization':'Bearer '+t},body:fd}).then(function(r){return r.json()}).then(function(d){showToast(d.message||d.error,d.message?'success':'error')}).catch(function(){showToast('Errore di connessione','error')})" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                </form>
+                <div class="inline-flex items-center justify-center w-full px-4 py-2.5 bg-white dark:bg-slate-700 border-2 border-dashed border-gray-300 dark:border-slate-600 text-gray-500 dark:text-slate-400 rounded-xl text-sm font-medium">
+                  <svg class="size-4 mr-1.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M7.5 12l4.5-4.5m0 0l4.5 4.5M12 7.5V21"/></svg>
+                  Carica e ripristina
+                </div>
+              </div>
+            </div>
+
+            <button @click="modal = false" class="mt-4 w-full px-4 py-2 text-sm font-medium text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200 transition-colors">
+              Annulla
+            </button>
+          </div>
+        </div>
+      </template>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

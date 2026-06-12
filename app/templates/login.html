@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Login — CalendarioKart{% endblock %}
+{% block content %}
+{% from '_icons.html' import icon_flag %}
+<div class="flex min-h-[70vh] items-center justify-center px-4">
+    <div class="w-full max-w-sm animate-slide-up">
+        <div class="text-center mb-8">
+            <div class="inline-flex items-center justify-center size-16 bg-red-600 rounded-2xl shadow-lg mb-4">
+                <span class="text-white">{{ icon_flag(class="size-8 text-white") }}</span>
+            </div>
+            <h1 class="text-2xl font-extrabold tracking-tight text-gray-900 dark:text-white">CalendarioKart</h1>
+            <p class="text-sm text-gray-500 dark:text-slate-400 mt-1">Accedi al calendario gare</p>
+        </div>
+
+        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-gray-200 dark:border-slate-700 p-8">
+            <div id="login-error" class="hidden flex items-center space-x-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-xl mb-4 text-sm"></div>
+
+            <form id="login-form" class="space-y-5">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1.5">Email</label>
+                    <div class="relative">
+                        <svg class="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/></svg>
+                        <input type="email" name="email" required placeholder="nome@email.it" class="block w-full rounded-xl border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 pl-10 pr-3 py-2.5 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 dark:text-white transition-colors duration-150">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1.5">Password</label>
+                    <div class="relative">
+                        <svg class="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/></svg>
+                        <input type="password" name="password" required placeholder="••••••" class="block w-full rounded-xl border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 pl-10 pr-3 py-2.5 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 dark:text-white transition-colors duration-150">
+                    </div>
+                </div>
+                <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white rounded-xl px-4 py-2.5 text-sm font-semibold shadow-lg shadow-red-600/20 hover:shadow-red-600/30 transition-all duration-150">
+                    Accedi
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('login-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const form = e.target;
+    const errorEl = document.getElementById('login-error');
+    errorEl.classList.add('hidden');
+
+    const res = await fetch('/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: form.email.value, password: form.password.value })
+    });
+
+    if (res.ok) {
+        const data = await res.json();
+        localStorage.setItem('token', data.access_token);
+        window.location.href = '/races';
+    } else {
+        const err = await res.json();
+        errorEl.textContent = '';
+        errorEl.innerHTML = `<svg class="size-4 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg><span>${err.detail || 'Errore di login'}</span>`;
+        errorEl.classList.remove('hidden');
+    }
+});
+</script>
+{% endblock %}

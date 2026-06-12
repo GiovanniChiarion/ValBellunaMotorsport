@@ -1,0 +1,256 @@
+{% extends "base.html" %}
+{% block title %}{{ race.descrizione }} — CalendarioKart{% endblock %}
+{% block content %}
+{% from '_icons.html' import icon_arrow_left, icon_pencil, icon_trash, icon_clipboard, icon_car, icon_note, icon_calendar, icon_tag, icon_flag, icon_check_circle, icon_x_circle, icon_question_mark_circle, icon_users %}
+
+<div class="max-w-5xl mx-auto">
+    <a href="/races" class="inline-flex items-center text-sm font-medium text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white mb-6 transition-colors">
+        {{ icon_arrow_left(class="size-4 mr-1") }}
+        Torna al calendario
+    </a>
+
+    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-200 dark:border-slate-700 p-6 sm:p-8 mb-6">
+        <div class="flex flex-col sm:flex-row items-start justify-between gap-4">
+            <div class="flex items-start space-x-4">
+                <div class="size-14 rounded-2xl bg-red-600 flex items-center justify-center shrink-0">
+                    {{ icon_flag(class="size-7 text-white") }}
+                </div>
+                <div>
+                    <h1 class="text-2xl font-extrabold tracking-tight text-gray-900 dark:text-white">{{ race.descrizione }}</h1>
+                    <div class="flex flex-wrap items-center gap-2 mt-1.5">
+                        <span class="inline-flex items-center text-sm text-gray-500 dark:text-slate-400">
+                            {{ icon_calendar(class="size-4 mr-1") }}
+                            {% if race.data_inizio %}{{ race.data_inizio.strftime('%d/%m/%Y') }}{% endif %}
+                            {% if race.data_fine and race.data_fine != race.data_inizio %} — {{ race.data_fine.strftime('%d/%m/%Y') }}{% endif %}
+                        </span>
+                        {% if race.tipo_gara %}
+                        <span class="inline-flex items-center text-xs font-semibold uppercase tracking-wider bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300 px-2 py-0.5 rounded-md">
+                            {{ icon_tag(class="size-3 mr-0.5") }}
+                            {{ race.tipo_gara }}
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+                <span class="inline-flex items-center px-3 py-1.5 rounded-xl text-xs font-bold
+                    {% if race.stato == 'Confermato' %}bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-700
+                    {% elif race.stato == 'Annullato' %}bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-700
+                    {% else %}bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-700{% endif %}">
+                    {{ icon_flag(class="size-3 mr-1") }}
+                    {{ race.stato }}
+                </span>
+            </div>
+        </div>
+
+        {% if race.note_auto %}
+        <div class="mt-5 flex items-start space-x-3 bg-gray-50 dark:bg-slate-700/50 rounded-xl px-4 py-3">
+            {{ icon_car(class="size-5 text-gray-500 dark:text-slate-400 mt-0.5 shrink-0") }}
+            <div>
+                <span class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400">Auto:</span>
+                <p class="text-sm text-gray-700 dark:text-slate-300 mt-0.5">{{ race.note_auto }}</p>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="mt-4 flex flex-wrap items-center gap-3">
+            {% if race.scadenza_conferma %}
+            <span class="inline-flex items-center text-sm text-gray-500 dark:text-slate-400">
+                <svg class="size-4 mr-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                Conferma entro: {{ race.scadenza_conferma.strftime('%d/%m/%Y') }}
+            </span>
+            {% endif %}
+
+            {% if is_admin %}
+            <a href="/races/{{ race.id }}/edit" class="inline-flex items-center px-3 py-1.5 bg-white dark:bg-slate-700 border border-gray-200 dark:border-slate-600 text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-600 rounded-xl text-sm font-medium transition-all duration-150">
+                {{ icon_pencil(class="size-4 mr-1") }}
+                Modifica
+            </a>
+            <button onclick="deleteRace({{ race.id }})" class="inline-flex items-center px-3 py-1.5 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-xl text-sm font-medium transition-all duration-150">
+                {{ icon_trash(class="size-4 mr-1") }}
+                Elimina
+            </button>
+            {% endif %}
+        </div>
+    </div>
+
+    {% set si_members = [] %}
+    {% set no_members = [] %}
+    {% set indeciso_members = [] %}
+    {% for m in members %}
+        {% set p = participations.get(m.id) %}
+        {% set s = p.status if p else 'indeciso' %}
+        {% if s == 'si' %}
+            {% set _ = si_members.append(m) %}
+        {% elif s == 'no' %}
+            {% set _ = no_members.append(m) %}
+        {% else %}
+            {% set _ = indeciso_members.append(m) %}
+        {% endif %}
+    {% endfor %}
+
+    <div class="flex flex-wrap items-center gap-2 mb-6"
+         data-si-names="{% for m in si_members %}{{ m.nome }}{% if not loop.last %}, {% endif %}{% endfor %}"
+         data-si-with-car="{% for m in si_members %}{{ m.nome }}{% if race.note_auto %} ({{ race.note_auto }}){% endif %}{% if not loop.last %}, {% endif %}{% endfor %}">
+        <button onclick="copyNames('data-si-names')" class="inline-flex items-center px-4 py-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 rounded-xl text-sm font-medium shadow-sm transition-all duration-150">
+            {{ icon_clipboard(class="size-4 mr-1.5") }}
+            Copia partecipanti
+        </button>
+        <button onclick="copyNames('data-si-with-car')" class="inline-flex items-center px-4 py-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 rounded-xl text-sm font-medium shadow-sm transition-all duration-150">
+            {{ icon_clipboard(class="size-4 mr-1.5") }}
+            Copia con auto
+        </button>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-green-200 dark:border-green-800 p-5">
+            <div class="flex items-center space-x-2 mb-4">
+                <span class="text-green-600">{{ icon_check_circle(class="size-5") }}</span>
+                <h3 class="text-sm font-bold uppercase tracking-wider text-green-700 dark:text-green-400">SI ({{ si_members|length }})</h3>
+            </div>
+            <div class="space-y-2">
+                {% for m in si_members %}
+                {% set p = participations.get(m.id) %}
+                <div class="flex items-center justify-between text-sm" x-data="{ showNote: false }">
+                    <div class="flex items-center space-x-2 min-w-0">
+                        <div class="size-7 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-xs font-bold text-green-700 dark:text-green-400 shrink-0">
+                            {{ m.nome[:1]|upper }}
+                        </div>
+                        <span class="text-gray-800 dark:text-slate-200 truncate">{{ m.nome }}</span>
+                        {% if p and p.con_macchina %}
+                        <span class="text-green-600 dark:text-green-400 shrink-0" title="Porta la macchina">{{ icon_car(class="size-3.5") }}</span>
+                        {% endif %}
+                        {% if p and p.nota_personale %}
+                        <button @click="showNote = !showNote" class="text-gray-400 hover:text-gray-600 dark:hover:text-slate-300 transition-colors shrink-0" title="Nota personale">
+                            {{ icon_note(class="size-3.5") }}
+                        </button>
+                        {% endif %}
+                    </div>
+                    {% if is_admin %}
+                    <select class="text-xs bg-transparent border border-gray-200 dark:border-slate-600 rounded-lg px-1.5 py-1 text-gray-600 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500" onchange="adminSetStatus({{ m.id }}, {{ race.id }}, this.value)">
+                        <option value="si" selected>SI</option>
+                        <option value="no">NO</option>
+                        <option value="indeciso">?</option>
+                    </select>
+                    {% endif %}
+                    {% if p and p.nota_personale %}
+                    <div x-show="showNote" @click.outside="showNote = false" x-cloak class="absolute mt-1 text-xs text-gray-600 dark:text-slate-400 bg-white dark:bg-slate-700 rounded-xl px-3 py-2 border border-gray-200 dark:border-slate-600 shadow-lg max-w-xs z-10">
+                        {{ p.nota_personale }}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+                {% if si_members|length == 0 %}
+                <p class="text-sm text-gray-400 dark:text-slate-500 text-center py-4">Nessun SI</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-red-200 dark:border-red-800 p-5">
+            <div class="flex items-center space-x-2 mb-4">
+                <span class="text-red-600">{{ icon_x_circle(class="size-5") }}</span>
+                <h3 class="text-sm font-bold uppercase tracking-wider text-red-700 dark:text-red-400">NO ({{ no_members|length }})</h3>
+            </div>
+            <div class="space-y-2">
+                {% for m in no_members %}
+                {% set p = participations.get(m.id) %}
+                <div class="flex items-center justify-between text-sm" x-data="{ showNote: false }">
+                    <div class="flex items-center space-x-2 min-w-0">
+                        <div class="size-7 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center text-xs font-bold text-red-700 dark:text-red-400 shrink-0">
+                            {{ m.nome[:1]|upper }}
+                        </div>
+                        <span class="text-gray-800 dark:text-slate-200 truncate">{{ m.nome }}</span>
+                        {% if p and p.nota_personale %}
+                        <button @click="showNote = !showNote" class="text-gray-400 hover:text-gray-600 dark:hover:text-slate-300 transition-colors shrink-0" title="Nota personale">
+                            {{ icon_note(class="size-3.5") }}
+                        </button>
+                        {% endif %}
+                    </div>
+                    {% if is_admin %}
+                    <select class="text-xs bg-transparent border border-gray-200 dark:border-slate-600 rounded-lg px-1.5 py-1 text-gray-600 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500" onchange="adminSetStatus({{ m.id }}, {{ race.id }}, this.value)">
+                        <option value="si">SI</option>
+                        <option value="no" selected>NO</option>
+                        <option value="indeciso">?</option>
+                    </select>
+                    {% endif %}
+                    {% if p and p.nota_personale %}
+                    <div x-show="showNote" @click.outside="showNote = false" x-cloak class="absolute mt-1 text-xs text-gray-600 dark:text-slate-400 bg-white dark:bg-slate-700 rounded-xl px-3 py-2 border border-gray-200 dark:border-slate-600 shadow-lg max-w-xs z-10">
+                        {{ p.nota_personale }}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+                {% if no_members|length == 0 %}
+                <p class="text-sm text-gray-400 dark:text-slate-500 text-center py-4">Nessun NO</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-yellow-200 dark:border-yellow-800 p-5">
+            <div class="flex items-center space-x-2 mb-4">
+                <span class="text-yellow-600">{{ icon_question_mark_circle(class="size-5") }}</span>
+                <h3 class="text-sm font-bold uppercase tracking-wider text-yellow-700 dark:text-yellow-400">INDECISI ({{ indeciso_members|length }})</h3>
+            </div>
+            <div class="space-y-2">
+                {% for m in indeciso_members %}
+                {% set p = participations.get(m.id) %}
+                <div class="flex items-center justify-between text-sm" x-data="{ showNote: false }">
+                    <div class="flex items-center space-x-2 min-w-0">
+                        <div class="size-7 rounded-full bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center text-xs font-bold text-yellow-700 dark:text-yellow-400 shrink-0">
+                            {{ m.nome[:1]|upper }}
+                        </div>
+                        <span class="text-gray-800 dark:text-slate-200 truncate">{{ m.nome }}</span>
+                        {% if p and p.nota_personale %}
+                        <button @click="showNote = !showNote" class="text-gray-400 hover:text-gray-600 dark:hover:text-slate-300 transition-colors shrink-0" title="Nota personale">
+                            {{ icon_note(class="size-3.5") }}
+                        </button>
+                        {% endif %}
+                    </div>
+                    {% if is_admin %}
+                    <select class="text-xs bg-transparent border border-gray-200 dark:border-slate-600 rounded-lg px-1.5 py-1 text-gray-600 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500" onchange="adminSetStatus({{ m.id }}, {{ race.id }}, this.value)">
+                        <option value="si">SI</option>
+                        <option value="no">NO</option>
+                        <option value="indeciso" selected>?</option>
+                    </select>
+                    {% endif %}
+                    {% if p and p.nota_personale %}
+                    <div x-show="showNote" @click.outside="showNote = false" x-cloak class="absolute mt-1 text-xs text-gray-600 dark:text-slate-400 bg-white dark:bg-slate-700 rounded-xl px-3 py-2 border border-gray-200 dark:border-slate-600 shadow-lg max-w-xs z-10">
+                        {{ p.nota_personale }}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+                {% if indeciso_members|length == 0 %}
+                <p class="text-sm text-gray-400 dark:text-slate-500 text-center py-4">Nessun indeciso</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+{% if is_admin %}
+function adminSetStatus(userId, raceId, status) {
+    const token = localStorage.getItem('token');
+    fetch(`/participation/admin/${userId}/${raceId}?status=${status}`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+    }).then(r => {
+        if (r.ok) showToast('Aggiornato', 'success');
+        else showToast('Errore', 'error');
+    });
+}
+{% endif %}
+
+function deleteRace(raceId) {
+    if (!confirm('Eliminare questa gara?')) return;
+    const token = localStorage.getItem('token');
+    fetch(`/races/${raceId}/delete`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+    }).then(r => {
+        if (r.ok) window.location.href = '/races';
+    });
+}
+</script>
+{% endblock %}
