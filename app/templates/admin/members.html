@@ -137,9 +137,14 @@
 <script>
 function setRole(userId, ruolo) {
     const token = localStorage.getItem('token');
-    fetch(`/races/admin/members/${userId}/role?ruolo=${ruolo}`, {
-        method: 'POST', headers: { 'Authorization': `Bearer ${token}` }
-    }).then(r => { if (!r.ok) { showToast('Errore', 'error'); location.reload(); } });
+    fetch(`/races/admin/members/${userId}/role`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ruolo })
+    }).then(r => {
+        if (r.ok) { showToast('Ruolo cambiato', 'success'); location.reload(); }
+        else { r.json().then(e => showToast(e.detail || e.error, 'error')); }
+    });
 }
 
 function toggleUser(userId) {

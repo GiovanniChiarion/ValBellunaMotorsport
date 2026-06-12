@@ -232,9 +232,10 @@
 {% if is_admin %}
 function adminSetStatus(userId, raceId, status) {
     const token = localStorage.getItem('token');
-    fetch(`/participation/admin/${userId}/${raceId}?status=${status}`, {
+    fetch(`/participation/admin/${userId}/${raceId}`, {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status })
     }).then(r => {
         if (r.ok) showToast('Aggiornato', 'success');
         else showToast('Errore', 'error');

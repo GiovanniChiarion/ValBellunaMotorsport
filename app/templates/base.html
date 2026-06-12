@@ -200,6 +200,30 @@
             return res;
         }
 
+        async function setStatus(raceId, status, btn) {
+            if (btn) btn.classList.add('btn-status-loading');
+            const r = await apiFetch(`/participation/${raceId}`, {
+                method: 'POST', body: JSON.stringify({ status })
+            });
+            if (btn) btn.classList.remove('btn-status-loading');
+            if (r && r.ok) { showToast('Aggiornato', 'success'); location.reload(); }
+            else { showToast('Errore', 'error'); }
+        }
+
+        async function toggleMacchina(raceId, cb) {
+            const r = await apiFetch(`/participation/${raceId}/macchina`, { method: 'POST' });
+            if (r && r.ok) { showToast('Aggiornato', 'success'); location.reload(); }
+            else { showToast('Errore', 'error'); }
+        }
+
+        async function updateNota(raceId, el) {
+            const r = await apiFetch(`/participation/${raceId}/nota`, {
+                method: 'POST', body: JSON.stringify({ nota: el.value })
+            });
+            if (r && r.ok) { showToast('Nota salvata', 'info'); }
+            else { showToast('Errore', 'error'); }
+        }
+
         function showToast(msg, type) {
             const container = document.getElementById('toast-container');
             if (!container) return;
@@ -233,6 +257,13 @@
             var d = JSON.parse(evt.detail.xhr.responseText);
             showToast(d.message || d.error, d.message ? 'success' : 'error');
         }
+
+        document.body.addEventListener('htmx:configRequest', function(evt) {
+            const token = localStorage.getItem('token');
+            if (token) {
+                evt.detail.headers['Authorization'] = 'Bearer ' + token;
+            }
+        });
 
         document.body.addEventListener('htmx:beforeRequest', function(evt) {
             const btn = evt.detail.elt;
