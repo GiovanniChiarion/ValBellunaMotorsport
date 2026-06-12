@@ -1,8 +1,8 @@
 # Rewrite Log: FastAPI → Flask
 
 **Data**: 2026-06-12
-**Progetto originale**: `CalendarioKart/` (FastAPI, Fly.io)
-**Nuovo progetto**: `CalendarioKart-Flask/` (Flask, PythonAnywhere)
+**Progetto originale**: `ValBelluna Motorsport/` (FastAPI, Fly.io)
+**Nuovo progetto**: `ValBelluna Motorsport-Flask/` (Flask, PythonAnywhere)
 
 ## Perché il rewrite
 
@@ -118,7 +118,7 @@ fetch('/races/admin/import', {
 
 ## Progetto FastAPI originale
 
-- Repo: `/home/giovanni/Documents/CalendarioKart/`
+- Repo: `/home/giovanni/Documents/ValBelluna Motorsport/`
 - Deploy: Fly.io (`fly.toml`, `Dockerfile`)
 - Archivato con tag git: `fastapi-archive`
 - GitHub: repo privato

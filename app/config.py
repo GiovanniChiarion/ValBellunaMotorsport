@@ -7,7 +7,7 @@ class Settings(BaseSettings):
     jwt_secret: str = "cambia-questa-chiave-in-produzione"
     jwt_algorithm: str = "HS256"
     jwt_expire_minutes: int = 1440
-    app_name: str = "CalendarioKart"
+    app_name: str = "ValBelluna Motorsport"
     app_version: str = "1.0.0"
     debug: bool = False
     secret_key: str = "cambia-questa-chiave-in-produzione"

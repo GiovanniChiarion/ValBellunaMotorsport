@@ -1,29 +1,9 @@
-====================================================================
-   CALENDARIO KART — GUIDA COMPLETA PER SUPERADMIN
-   Documento aggiornato al: 11/06/2026
-====================================================================
+[COVER subtitle="Backup, ripristino e gestione di sistema"|role=Guida SuperAdmin|date=11/06/2026]
 
-
-INDICE
-------
-  1.  Panoramica
-  2.  Accesso e primo avvio
-  3.  Comportamento invisibile
-  4.  Backup completo (esportazione JSON)
-  5.  Ripristino da backup (importazione JSON)
-  6.  Esportazione storico audit log
-  7.  Riga di comando (CLI)
-  8.  Gestione account SuperAdmin
-  9.  Note e avvertenze
-
-
-====================================================================
-1.  PANORAMICA
-====================================================================
+= 1. PANORAMICA =
 
   Il SuperAdmin e' un ruolo speciale che estende i privilegi
   dell'admin standard con operazioni di sistema:
-
     - Backup completo del database (download JSON)
     - Ripristino del database da backup (upload JSON)
     - Esportazione dello storico audit log (download JSON)
@@ -31,16 +11,12 @@ INDICE
   A differenza dell'admin, il SuperAdmin NON e' visibile nelle
   liste pubbliche dell'applicazione (vedi sezione 3).
 
-
-====================================================================
-2.  ACCESSO E PRIMO AVVIO
-====================================================================
+= 2. ACCESSO E PRIMO AVVIO =
 
   Al primo avvio (o dopo reset del DB), il server crea
   automaticamente un SuperAdmin di default:
-
-    Email:     superadmin@calendariokart.it
-    Password:  superadmin123
+    [INFO Email|superadmin@valbellunamotorsport.it]
+    [INFO Password|superadmin123]
 
   Il login e' come qualsiasi altro utente:
     - Apri il browser all'indirizzo dell'applicazione
@@ -53,17 +29,13 @@ INDICE
       visibili SOLO a te
     - Nella pagina "Storico" vedi il pulsante "Esporta Storico"
 
-  CAMBIA IMMEDIATAMENTE la password di default.
+  [WARNING] Cambia IMMEDIATAMENTE la password di default.
   Vai su "Impostazioni" (menu in alto, icona ingranaggio)
   per cambiare password o email.
 
-
-====================================================================
-3.  COMPORTAMENTO INVISIBILE
-====================================================================
+= 3. COMPORTAMENTO INVISIBILE =
 
   Il SuperAdmin non compare in nessuna delle seguenti viste:
-
     - Lista membri (Admin Dashboard > Membri)
     - Partecipanti nelle pagine di dettaglio gara
     - Report e statistiche
@@ -73,49 +45,43 @@ INDICE
   esistenza. Gli admin standard e i membri non vedono alcuna
   traccia del SuperAdmin nell'applicazione.
 
-
-====================================================================
-4.  BACKUP COMPLETO (ESPORTAZIONE JSON)
-====================================================================
+= 4. BACKUP COMPLETO (ESPORTAZIONE JSON) =
 
   Scarica un file JSON contenente TUTTI i dati del database.
 
-  4.1 DAL BROWSER
-  ----------------
+== 4.1 DAL BROWSER ==
+
     - Vai su "Admin Dashboard"
     - Clicca sulla card "Backup Dati"
     Oppure apri direttamente:
-      http://localhost:8000/races/admin/export
+      [CODE] http://localhost:8000/races/admin/export
 
-  4.2 CONTENUTO DEL FILE JSON
-  ----------------------------
-    Il backup include, nell'ordine (rispettando le FK):
-      - race_types: tipi gara (codice, descrizione)
-      - users: tutti gli utenti (nome, email, ruolo, stato)
-      - races: tutte le gare (date, descrizione, tipo, stato, ecc.)
-      - participations: tutte le partecipazioni (utente, gara,
-        stato, nota, macchina)
-      - audit_logs: cronologia delle modifiche
+== 4.2 CONTENUTO DEL FILE JSON ==
 
-    Il file e' auto-consistente e puo' essere utilizzato per
-    un ripristino completo (sezione 5).
+  Il backup include, nell'ordine (rispettando le FK):
+    - race_types: tipi gara (codice, descrizione)
+    - users: tutti gli utenti (nome, email, ruolo, stato)
+    - races: tutte le gare (date, descrizione, tipo, stato, ecc.)
+    - participations: tutte le partecipazioni (utente, gara,
+      stato, nota, macchina)
+    - audit_logs: cronologia delle modifiche
 
+  [TIP] Il file e' auto-consistente e puo' essere utilizzato per
+  un ripristino completo (sezione 5).
 
-====================================================================
-5.  RIPRISTINO DA BACKUP (IMPORTAZIONE JSON)
-====================================================================
+= 5. RIPRISTINO DA BACKUP (IMPORTAZIONE JSON) =
 
   Carica un file JSON di backup per ripristinare i dati.
 
-  5.1 DAL BROWSER
-  ----------------
+== 5.1 DAL BROWSER ==
+
     - Vai su "Admin Dashboard"
     - Clicca sulla card "Ripristina Backup"
     - Seleziona il file JSON dal tuo computer
     - Il ripristino parte automaticamente
 
-  5.2 COMPORTAMENTO
-  ------------------
+== 5.2 COMPORTAMENTO ==
+
     - Il ripristino elimina TUTTI i dati esistenti e li
       sostituisce con quelli del backup
     - L'operazione avviene in una singola transazione SQL:
@@ -124,149 +90,139 @@ INDICE
     - Il file deve avere la stessa struttura dell'export
       generato dal sistema (sezione 4)
 
+  [WARNING] Il ripristino sovrascrive irreversibilmente tutti i dati
+  presenti. Effettua un backup preventivo prima di procedere.
 
-====================================================================
-6.  ESPORTAZIONE STORICO AUDIT LOG
-====================================================================
+= 6. ESPORTAZIONE STORICO AUDIT LOG =
 
   Scarica un file JSON con TUTTI gli eventi dell'audit log
   (senza limite di righe).
 
-  6.1 DAL BROWSER
-  ----------------
+== 6.1 DAL BROWSER ==
+
     - Vai su "Storico" nel menu in alto
     - Clicca "Esporta Storico"
     Oppure apri direttamente:
-      http://localhost:8000/history/export
+      [CODE] http://localhost:8000/history/export
 
-  6.2 CONTENUTO DEL FILE
-  -----------------------
-    Ogni evento include:
-      - Data e ora
-      - Nome dell'utente che ha fatto la modifica
-      - Descrizione della gara interessata
-      - Campo modificato
-      - Valore precedente e nuovo valore
+== 6.2 CONTENUTO DEL FILE ==
 
-    A differenza della pagina web (che mostra solo gli
-    ultimi 200 eventi), l'export contiene TUTTO lo storico
-    senza limiti.
+  Ogni evento include:
+    - Data e ora
+    - Nome dell'utente che ha fatto la modifica
+    - Descrizione della gara interessata
+    - Campo modificato
+    - Valore precedente e nuovo valore
 
+  A differenza della pagina web (che mostra solo gli
+  ultimi 200 eventi), l'export contiene TUTTO lo storico
+  senza limiti.
 
-====================================================================
-7.  RIGA DI COMANDO (CLI)
-====================================================================
+= 7. RIGA DI COMANDO (CLI) =
 
   Tutti i comandi si eseguono dal terminale, nella cartella
   del progetto, con l'ambiente virtuale attivo.
 
-  7.1 LISTA UTENTI
-  ------------------
-    .venv/bin/python -m app.cli list-users
+== 7.1 LISTA UTENTI ==
 
-    Mostra tutti gli utenti con ID, nome, email, ruolo e
-    stato attivo.
+  [CODE] .venv/bin/python -m app.cli list-users
 
-  7.2 RESET PASSWORD
-  -------------------
-    .venv/bin/python -m app.cli reset-password <email>
+  Mostra tutti gli utenti con ID, nome, email, ruolo e
+  stato attivo.
 
-    Resetta la password di un utente. Il comando chiede la
-    nuova password in modo interattivo (nascosta).
-    Opzione --password per usarla direttamente:
+== 7.2 RESET PASSWORD ==
 
-    .venv/bin/python -m app.cli reset-password \
-      superadmin@calendariokart.it --password nuova123
+  [CODE] .venv/bin/python -m app.cli reset-password <email>
 
-  7.3 PROMUOVI A SUPERADMIN
-  --------------------------
-    .venv/bin/python -m app.cli make-superadmin <email>
+  Resetta la password di un utente. Il comando chiede la
+  nuova password in modo interattivo (nascosta).
+  Opzione --password per usarla direttamente:
 
-    Promuove un utente esistente al ruolo superadmin.
-    Utile se un admin deve diventare SuperAdmin.
+  [CODE] .venv/bin/python -m app.cli reset-password \
+    superadmin@valbellunamotorsport.it --password nuova123
 
-  7.4 PROMUOVI A ADMIN
-  ----------------------
-    .venv/bin/python -m app.cli make-admin <email>
+== 7.3 PROMUOVI A SUPERADMIN ==
 
-    Promuove un utente esistente al ruolo admin.
+  [CODE] .venv/bin/python -m app.cli make-superadmin <email>
 
-  7.5 CREA NUOVO SUPERADMIN
-  --------------------------
-    .venv/bin/python -m app.cli create-superadmin \
-      <email> <nome>
+  Promuove un utente esistente al ruolo superadmin.
+  Utile se un admin deve diventare SuperAdmin.
 
-    Crea un nuovo utente con ruolo superadmin.
-    Il comando chiede la password in modo interattivo.
-    Opzione --password per usarla direttamente:
+== 7.4 PROMUOVI A ADMIN ==
 
-    .venv/bin/python -m app.cli create-superadmin \
-      admin2@calendariokart.it "Admin Due" --password forte123
+  [CODE] .venv/bin/python -m app.cli make-admin <email>
 
-  7.6 ELIMINA UTENTE
-  -------------------
-    .venv/bin/python -m app.cli delete-user <email>
+  Promuove un utente esistente al ruolo admin.
 
-    Elimina un utente (chiede conferma).
-    Opzione -y per saltare la conferma:
+== 7.5 CREA NUOVO SUPERADMIN ==
 
-    .venv/bin/python -m app.cli delete-user \
-      vecchio.utente@example.com -y
+  [CODE] .venv/bin/python -m app.cli create-superadmin <email> <nome>
 
+  Crea un nuovo utente con ruolo superadmin.
+  Il comando chiede la password in modo interattivo.
+  Opzione --password per usarla direttamente:
 
-====================================================================
-8.  GESTIONE ACCOUNT SUPERADMIN
-====================================================================
+  [CODE] .venv/bin/python -m app.cli create-superadmin \
+    admin2@valbellunamotorsport.it "Admin Due" --password forte123
 
-  8.1 CREARE UN NUOVO SUPERADMIN
-  --------------------------------
-    Dal terminale:
-      .venv/bin/python -m app.cli create-superadmin \
-        email@example.com "Nome Cognome"
+== 7.6 ELIMINA UTENTE ==
 
-    Oppure promuovendo un utente esistente:
-      .venv/bin/python -m app.cli make-superadmin \
-        email@example.com
+  [CODE] .venv/bin/python -m app.cli delete-user <email>
 
-  8.2 RESETTARE LA PASSWORD
-  ---------------------------
-    Dal terminale:
-      .venv/bin/python -m app.cli reset-password \
-        superadmin@calendariokart.it
+  Elimina un utente (chiede conferma).
+  Opzione -y per saltare la conferma:
 
-    Ti verra' chiesta la nuova password (due volte per
-    conferma). In alternativa, con --password:
+  [CODE] .venv/bin/python -m app.cli delete-user \
+    vecchio.utente@example.com -y
 
-      .venv/bin/python -m app.cli reset-password \
-        superadmin@calendariokart.it --password nuova123
+= 8. GESTIONE ACCOUNT SUPERADMIN =
 
-  8.3 ELIMINARE UN SUPERADMIN
-  -----------------------------
-    Dal terminale:
-      .venv/bin/python -m app.cli delete-user \
-        superadmin@calendariokart.it
+== 8.1 CREARE UN NUOVO SUPERADMIN ==
 
-    ATTENZIONE: l'eliminazione e' irreversibile. Assicurati
-    che esista almeno un altro SuperAdmin prima di eliminare
-    l'ultimo.
+  Dal terminale:
+  [CODE] .venv/bin/python -m app.cli create-superadmin \
+    email@example.com "Nome Cognome"
 
-  8.4 CAMBIARE PASSWORD/EMAIL DAL BROWSER
-  -----------------------------------------
-    Vai su "Impostazioni" (menu in alto, icona ingranaggio)
-    per cambiare la tua password o email. Funziona come per
-    qualsiasi altro utente.
+  Oppure promuovendo un utente esistente:
+  [CODE] .venv/bin/python -m app.cli make-superadmin email@example.com
 
+== 8.2 RESETTARE LA PASSWORD ==
 
-====================================================================
-9.  NOTE E AVVERTENZE
-====================================================================
+  Dal terminale:
+  [CODE] .venv/bin/python -m app.cli reset-password \
+    superadmin@valbellunamotorsport.it
 
-  - Il SuperAdmin di default viene ricreato automaticamente
-    dopo un reset del database (rm calendario.db* + migrazioni)
-  - I backup JSON NON contengono password in chiaro (solo hash)
-  - Conserva i backup in un luogo sicuro (contengono dati
-    personali di tutti gli utenti)
-  - Non eliminare l'ultimo SuperAdmin: non ci sarebbe piu'
-    modo di fare backup/ripristino dall'interfaccia web
-  - I token di registrazione sono in memoria e vengono persi
-    al riavvio del server (dovrai rigenerarli)
+  Ti verra' chiesta la nuova password (due volte per
+  conferma). In alternativa, con --password:
+
+  [CODE] .venv/bin/python -m app.cli reset-password \
+    superadmin@valbellunamotorsport.it --password nuova123
+
+== 8.3 ELIMINARE UN SUPERADMIN ==
+
+  Dal terminale:
+  [CODE] .venv/bin/python -m app.cli delete-user \
+    superadmin@valbellunamotorsport.it
+
+  [WARNING] L'eliminazione e' irreversibile. Assicurati che esista
+  almeno un altro SuperAdmin prima di eliminare l'ultimo — senza
+  SuperAdmin non e' possibile effettuare backup/ripristino
+  dall'interfaccia web.
+
+== 8.4 CAMBIARE PASSWORD/EMAIL DAL BROWSER ==
+
+  Vai su "Impostazioni" (menu in alto, icona ingranaggio)
+  per cambiare la tua password o email. Funziona come per
+  qualsiasi altro utente.
+
+= 9. NOTE E AVVERTENZE =
+
+    - Il SuperAdmin di default viene ricreato automaticamente
+      dopo un reset del database
+    - I backup JSON NON contengono password in chiaro (solo hash)
+    - Conserva i backup in un luogo sicuro: contengono dati
+      personali di tutti gli utenti
+    - Non eliminare l'ultimo SuperAdmin: non ci sarebbe piu'
+      modo di fare backup/ripristino dall'interfaccia web
+    - I token di registrazione sono in memoria e vengono persi
+      al riavvio del server (dovrai rigenerarli)

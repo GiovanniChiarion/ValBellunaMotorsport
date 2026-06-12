@@ -61,6 +61,6 @@ def export_history():
         json.dumps(data, indent=2, ensure_ascii=False),
         mimetype="application/json",
         headers={
-            "Content-Disposition": "attachment; filename=calendariokart-history.json"
+            "Content-Disposition": "attachment; filename=valbellunamotorsport-history.json"
         },
     )

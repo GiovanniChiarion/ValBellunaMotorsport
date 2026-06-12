@@ -77,7 +77,7 @@ def create_app(test_config=None) -> Flask:
                 if not admin:
                     admin = User(
                         nome="Admin",
-                        email="admin@calendariokart.it",
+                        email="admin@valbellunamotorsport.it",
                         password_hash=hash_password("admin123"),
                         ruolo="admin",
                     )
@@ -87,7 +87,7 @@ def create_app(test_config=None) -> Flask:
                 if not superadmin:
                     superadmin = User(
                         nome="SuperAdmin",
-                        email="superadmin@calendariokart.it",
+                        email="superadmin@valbellunamotorsport.it",
                         password_hash=hash_password("superadmin123"),
                         ruolo="superadmin",
                     )

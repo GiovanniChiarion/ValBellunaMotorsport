@@ -47,26 +47,28 @@ def seed():
     if not admin:
         admin = User(
             nome="Admin",
-            email="admin@calendariokart.it",
+            email="admin@valbellunamotorsport.it",
             password_hash=hash_password("admin123"),
             ruolo="admin",
         )
         db.add(admin)
         db.commit()
-        print("✅ Admin creato: admin@calendariokart.it / admin123")
+        print("✅ Admin creato: admin@valbellunamotorsport.it / admin123")
 
     # Create SuperAdmin if missing
     superadmin = db.query(User).filter(User.ruolo == "superadmin").first()
     if not superadmin:
         superadmin = User(
             nome="SuperAdmin",
-            email="superadmin@calendariokart.it",
+            email="superadmin@valbellunamotorsport.it",
             password_hash=hash_password("superadmin123"),
             ruolo="superadmin",
         )
         db.add(superadmin)
         db.commit()
-        print("✅ SuperAdmin creato: superadmin@calendariokart.it / superadmin123")
+        print(
+            "✅ SuperAdmin creato: superadmin@valbellunamotorsport.it / superadmin123"
+        )
 
     # Seed initial race types
     initial_types = [
@@ -112,7 +114,7 @@ def seed():
         if existing:
             user_map[name] = existing
         else:
-            email = name.lower().replace(" ", ".") + "@calendariokart.it"
+            email = name.lower().replace(" ", ".") + "@valbellunamotorsport.it"
             u = User(
                 nome=name,
                 email=email,

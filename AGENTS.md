@@ -1,12 +1,12 @@
-# CalendarioKart
+# ValBelluna Motorsport
 
-Kart association calendar app — Flask 3.1, SQLAlchemy 2.0, Flask-JWT-Extended, Jinja2 + HTMX + Alpine.js + Tailwind CSS (CDN). Deployed on PythonAnywhere.
+Kart association calendar app — Flask 3.1, SQLAlchemy 2.0, Flask-JWT-Extended, Jinja2 + HTMX 2.0 + Alpine.js 3.14 + Tailwind CSS (CDN). Deployed on PythonAnywhere. Python 3.14 (pyright). Rewritten from FastAPI → Flask (see `docs/rewrite-log.md`).
 
 ## Quick start
 
 ```bash
-./start.sh                    # one-click
-.venv/bin/python run.py       # → http://localhost:8000
+./start.sh                 # .venv/bin/python run.py → :8000
+.venv/bin/python run.py    # debug mode, host 0.0.0.0
 ```
 
 ## Verification pipeline (run in order)
@@ -18,70 +18,63 @@ Kart association calendar app — Flask 3.1, SQLAlchemy 2.0, Flask-JWT-Extended,
 .venv/bin/python -m pytest tests/ -v
 ```
 
-## Blueprints & routes
+## Architecture
 
-| Blueprint | Prefix | Routes | Notable |
-|-----------|--------|--------|---------|
-| `auth` | `/auth` | 14 (login, register, settings, tokens, admin change credentials) | Registration tokens in-memory → lost on restart. Change-email/password via JS fetch + JSON |
-| `races` | `/races` | 18 (calendar, detail, CRUD, admin dashboard, members, types, export/import) | Export/import guarded by `@superadmin_required`. Import route returns `"error"` key (not `"detail"`) on failure |
-| `participation` | `/participation` | 4 (set status, note, macchina toggle, admin override) | Admin override bypasses `scadenza_conferma`. All routes log to AuditLog |
-| `reports` | `/reports` | 1 (aggregate stats) | Admin-only. Filters out `ruolo == "superadmin"` |
-| `history` | `/history` | 2 (last 200 logs, export JSON) | Export is superadmin-only, no row limit |
+| Blueprint | Prefix | Key routes |
+|-----------|--------|------------|
+| `auth` | `/auth` | GET/POST login, logout, register, settings, change-password/email, admin change-credentials, token generation |
+| `races` | `/races` | Calendar (year filter), detail, CRUD, admin dashboard/members/types, export (superadmin), import (superadmin) |
+| `participation` | `/participation` | Set status, update note, toggle macchina, admin override |
+| `reports` | `/reports` | Aggregate stats (admin-only, filters `ruolo != "superadmin"`) |
+| `history` | `/history` | Last 200 audit logs, export JSON (superadmin, no row limit) |
+
+- **Vanilla SQLAlchemy** (not Flask-SQLAlchemy): `Base`, `engine`, `SessionLocal`, `get_db()` context manager in `app/database.py`
+- **DELETE journal mode** (not WAL) — PythonAnywhere NFS compatibility
+- `before_request` auto-creates `Base.metadata.create_all` + default admin/superadmin on first request
+- **APScheduler** (`app/tasks.py`) defines `start_scheduler()`/`stop_scheduler()` but is **never called** in the app factory — not wired into startup
+
+## Auth & roles
+
+- `@jwt_required()` / `@admin_required` (admin+superadmin) / `@superadmin_required` / `@optional_auth`
+- `@jwt_required` is a **local wrapper** (`app/auth.py`), not `flask_jwt_extended`'s directly
+- `JWT_TOKEN_LOCATION = ["headers", "cookies"]` — Bearer requests skip CSRF, cookie-only requests require CSRF
+- Login sets both JSON body + httpOnly cookie
+- Defaults: `admin@valbellunamotorsport.it` / `admin123`, `superadmin@valbellunamotorsport.it` / `superadmin123`
+- SuperAdmin hidden from all member/participant/report/dashboard queries (`User.ruolo != "superadmin"`)
+- Registration tokens stored in-memory in `app/blueprints/auth.py:20` — **lost on restart**
+
+## Database quirks
+
+- `User.attivo` and `Participation.con_macchina` are `Integer(0/1)`, not bool
+- `Race.data_inizio` and `Race.data_fine` are nullable (`NULL` = no date / single-day)
+- `scadenza_conferma` checked against `datetime.now(UTC).date()` in participation routes
+- Calendar view uses `func.strftime("%Y", Race.data_inizio)` — SQLite-specific, not portable
+- Alembic migrations exist (`alembic/versions/`) but `before_request` auto-creates tables, so migrations are optional
+
+## Templates
+
+- All URLs are **hardcoded** (no `url_for`) — match blueprint `url_prefix` exactly
+- **File upload** (import backup) uses native `fetch()` + `FormData` + `Authorization: Bearer` header — HTMX can't handle multipart file upload
+- Import route returns `"error"` key on failure; all other JSON routes return `"detail"`
 
 ## CLI (`python -m app.cli <command>`)
 
 ```
-list-users                        reset-password <email>
+list-users                        reset-password <email> [--password]
 make-superadmin <email>           make-admin <email>
-create-superadmin <email> <nome>  delete-user <email>
+create-superadmin <email> <nome>  delete-user <email> [-y]
 ```
-
-## Auth & roles
-
-- `@jwt_required()` / `@admin_required` (admin+superadmin) / `@superadmin_required` / `@optional_auth` (home page, sets `g.current_user=None` on no token)
-- JWT in both cookies and `Authorization: Bearer` header. Token location config: `["headers", "cookies"]` — Bearer requests skip CSRF, cookie-only requests require CSRF. Login sets JSON + httpOnly cookie.
-- Defaults: `admin@calendariokart.it` / `admin123`, `superadmin@calendariokart.it` / `superadmin123`
-- SuperAdmin hidden from member lists, participant lists, reports, dashboards (`User.ruolo != "superadmin"` in queries)
-
-## Database
-
-- **Vanilla SQLAlchemy** (not Flask-SQLAlchemy): `Base`, `engine`, `SessionLocal`, `get_db()` context manager in `app/database.py`
-- **DELETE journal mode** (not WAL) — PythonAnywhere NFS compatibility
-- `User.attivo` and `Participation.con_macchina` are `Integer` (0/1), not bool
-- `Race.data_fine` is nullable (`NULL` for single-day races)
-- `before_request` auto-creates tables + default admin/superadmin on first request
 
 ## Tests
 
-- `conftest.py` sets `DATABASE_URL=sqlite:///:memory:`, `SECRET_KEY=test-secret-key`, `JWT_SECRET=test-jwt-secret` **before** importing app
+- `tests/conftest.py` sets `DATABASE_URL=sqlite:///:memory:`, `SECRET_KEY`, `JWT_SECRET` **before** importing app
 - Fixtures: `app` (session-scoped create_all/drop_all), `client`, `db`, `*_user`, `*_token`, `auth_headers`
 - Token auth: `create_access_token(identity=str(user.id))` → pass as `Authorization: Bearer` header
 
-## PythonAnywhere deploy
+## PythonAnywhere
 
-```bash
-# On PythonAnywhere Bash console:
-git clone git@github.com:GiovanniChiarion/KartProject.git
-mkvirtualenv --python=python3.13 kart
-pip install -r requirements.txt
-# After local changes: git pull + pip install -r requirements.txt (if deps changed)
-```
-
-WSGI file (`/var/www/GChiarion_pythonanywhere_com_wsgi.py`):
-
-```python
-import sys, os
-sys.path.insert(0, '/home/GChiarion/KartProject')
-os.environ['DATABASE_URL'] = 'sqlite://///home/GChiarion/KartProject/calendario.db'
-os.environ['JWT_SECRET'] = '<openssl rand -hex 32>'
-os.environ['SECRET_KEY'] = '<openssl rand -hex 32>'
-os.environ['DEBUG'] = 'false'
-from app import create_app
-application = create_app()
-```
-
-Static files Web tab: `/static/` → `/home/GChiarion/KartProject/app/static/`. Reload after every `git pull`.
+WSGI file at `/var/www/GChiarion_pythonanywhere_com_wsgi.py`. Static Web tab: `/static/` → `/home/GChiarion/KartProject/app/static/`. Env vars: `DATABASE_URL`, `JWT_SECRET`, `SECRET_KEY`, `DEBUG=false`. Reload after every `git pull`.
 
 ## Seed
 
-`python -m app.seed` reads `TEST Calendario 2026 Valbelluna Motorsport.xlsx` for bulk import. On PythonAnywhere the file doesn't exist → skips gracefully (admin/superadmin/race types already created by `before_request`).
+`python -m app.seed` reads `TEST Calendario 2026 Valbelluna Motorsport.xlsx` for bulk import. On PythonAnywhere the file doesn't exist → skips gracefully.

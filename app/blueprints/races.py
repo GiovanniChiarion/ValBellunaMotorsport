@@ -478,7 +478,7 @@ def export_all_data():
         json.dumps(data, indent=2, ensure_ascii=False),
         mimetype="application/json",
         headers={
-            "Content-Disposition": "attachment; filename=calendariokart-backup.json"
+            "Content-Disposition": "attachment; filename=valbellunamotorsport-backup.json"
         },
     )
 

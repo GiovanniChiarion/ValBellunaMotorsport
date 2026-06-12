@@ -1,8 +1,8 @@
-# CalendarioKart-Flask: Design Document
+# ValBelluna Motorsport-Flask: Design Document
 
 ## Overview
 
-Rewrite CalendarioKart from FastAPI to Flask as a **new project** (`CalendarioKart-Flask/`) alongside the existing FastAPI repo. Goals:
+Rewrite ValBelluna Motorsport from FastAPI to Flask as a **new project** (`ValBelluna Motorsport-Flask/`) alongside the existing FastAPI repo. Goals:
 - Deploy on PythonAnywhere free tier ($0, always-on, persistent SQLite)
 - Maintain identical functionality (auth, dashboard, admin, reports, history, backup/export/import)
 - Preserve all SQLAlchemy models and Jinja2 templates (copied identically, zero changes)
@@ -13,7 +13,7 @@ Rewrite CalendarioKart from FastAPI to Flask as a **new project** (`CalendarioKa
 ### Project structure
 
 ```
-CalendarioKart-Flask/
+ValBelluna Motorsport-Flask/
 ├── app/
 │   ├── __init__.py          # app factory: create_app()
 │   ├── config.py            # Flask-style config from env vars
@@ -226,7 +226,7 @@ def client(app):
 def access_token(client):
     """Login as admin, return JWT access token string."""
     login_response = client.post("/auth/login", json={
-        "email": "admin@calendariokart.it",
+        "email": "admin@valbellunamotorsport.it",
         "password": "admin123"
     })
     return login_response.get_json()["access_token"]
@@ -245,7 +245,7 @@ Since we're using TDD, each blueprint gets tested first:
 
 ```bash
 # Clone the new repo
-git clone https://github.com/.../CalendarioKart-Flask.git
+git clone https://github.com/.../ValBelluna Motorsport-Flask.git
 
 # Virtual environment
 python3 -m venv .venv
@@ -267,13 +267,13 @@ flask run                   # test locally
 ```
 SECRET_KEY=<random>
 JWT_SECRET_KEY=<random>
-DATABASE_URL=sqlite:///home/tuonome/CalendarioKart-Flask/calendario.db
+DATABASE_URL=sqlite:///home/tuonome/ValBelluna Motorsport-Flask/calendario.db
 DEBUG=False
 ```
 
 ### Free tier limits
 
-| Resource | Limit | CalendarioKart usage |
+| Resource | Limit | ValBelluna Motorsport usage |
 |----------|-------|---------------------|
 | CPU | Throttled at 100% sustained | Well under (CRUD clicks) |
 | Storage | 512MB | ~10-20MB |

@@ -136,7 +136,7 @@ def main():
     Base.metadata.create_all(bind=engine)
 
     parser = argparse.ArgumentParser(
-        description="CalendarioKart — CLI di amministrazione"
+        description="ValBelluna Motorsport — CLI di amministrazione"
     )
     sub = parser.add_subparsers(dest="command", required=True)
 

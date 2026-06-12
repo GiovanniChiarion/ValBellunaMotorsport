@@ -1,31 +1,8 @@
-====================================================================
-  CALENDARIO KART — GUIDA COMPLETA PER AMMINISTRATORI
-   Documento aggiornato al: 11/06/2026
-====================================================================
+[COVER subtitle="Gestione completa della piattaforma"|role=Guida Amministratore|date=11/06/2026]
 
+= 1. PANORAMICA =
 
-INDICE
-------
-  1.  Panoramica
-  2.  Accesso e primo avvio
-  3.  Dashboard e calendario gare
-  4.  Gestione gare (CRUD)
-  5.  Gestione tipi gara
-  6.  Gestione membri
-  7.  Token di registrazione e inviti
-  8.  Partecipazione e override admin
-  9.  Report e statistiche
-  10. Cronologia audit log
-  11. Anagrafica amministratori
-  12. Riga di comando (setup e manutenzione)
-  13. Glossario
-
-
-====================================================================
-1.  PANORAMICA
-====================================================================
-
-  CalendarioKart e' un'applicazione web per la gestione del
+  ValBelluna Motorsport e' un'applicazione web per la gestione del
   calendario di un'associazione di karting.
 
   I membri possono:
@@ -45,31 +22,24 @@ INDICE
     - Visualizzare report e statistiche
     - Consultare la cronologia delle modifiche (audit log)
 
-
-====================================================================
-2.  ACCESSO E PRIMO AVVIO
-====================================================================
+= 2. ACCESSO E PRIMO AVVIO =
 
   Al primo avvio l'applicazione crea automaticamente un admin
   di default:
-    Email:    admin@calendariokart.it
-    Password: admin123
+    [INFO Email|admin@valbellunamotorsport.it]
+    [INFO Password|admin123]
 
   Dopo il login, vai su "Admin Dashboard" dal menu per accedere
   a tutte le funzioni di amministrazione.
 
-   CAMBIA IMMEDIATAMENTE la password dell'admin di default in
-   produzione. Vai su "Impostazioni" dal menu (icona ingranaggio)
-   per cambiare password o email.
+  [WARNING] Cambia IMMEDIATAMENTE la password dell'admin di default in
+  produzione. Vai su "Impostazioni" dal menu (icona ingranaggio)
+  per cambiare password o email.
 
-
-====================================================================
-3.  DASHBOARD E CALENDARIO GARE
-====================================================================
+= 3. DASHBOARD E CALENDARIO GARE =
 
   La dashboard mostra il calendario delle gare per l'anno
   selezionato. Ogni gara mostra:
-
     - Data inizio / data fine (gare multi-giorno)
     - Descrizione e tipo gara
     - Stato (Confermato, Annullato, In attesa di conferma)
@@ -79,13 +49,10 @@ INDICE
 
   Per cambiare anno usa il selettore in alto.
 
+= 4. GESTIONE GARE (CRUD) =
 
-====================================================================
-4.  GESTIONE GARE (CRUD)
-====================================================================
+== 4.1 CREARE UNA GARA ==
 
-  4.1 CREARE UNA GARA
-  --------------------
     - Vai su "Admin Dashboard" > "Crea Gara"
     - Inserisci:
         * Data inizio (obbligatoria)
@@ -94,101 +61,93 @@ INDICE
         * Tipo gara (seleziona dal menu a tendina)
         * Scadenza conferma
         * Stato (Confermato / Annullato / In attesa di conferma)
-        * Note auto (dettagli sulla macchina, es. "portare
-          ricambi")
+        * Note auto (dettagli sulla macchina, es. "portare ricambi")
     - Il tipo gara viene caricato dalla tabella race_types.
-      Se il tipo che cerchi non c'e', crealo prima (vedi
-      sezione 5).
 
-  4.2 MODIFICARE UNA GARA
-  ------------------------
+  [TIP] Se il tipo che cerchi non c'e', crealo prima (vedi sezione 5).
+
+== 4.2 MODIFICARE UNA GARA ==
+
     - Dalla lista gare o dal dettaglio, clicca "Modifica"
     - Modifica i campi desiderati
     - Le modifiche vengono tracciate nell'audit log
 
-  4.3 ELIMINARE UNA GARA
-  -----------------------
+== 4.3 ELIMINARE UNA GARA ==
+
     - Dalla lista gare, clicca "Elimina"
-    - Vengono eliminati anche tutti i record di partecipazione
-      associati
-    - Azione irreversibile
+    - Vengono eliminati anche tutti i record di partecipazione associati
 
+  [WARNING] L'eliminazione di una gara e' irreversibile. Tutti i dati
+  di partecipazione verranno persi.
 
-====================================================================
-5.  GESTIONE TIPI GARA
-====================================================================
+= 5. GESTIONE TIPI GARA =
 
   I tipi gara (RaceType) sono un catalogo con codice e
   descrizione (es. "CAMP" = "Campionato", "TROF" = "Trofeo").
 
-  5.1 CREARE UN TIPO
-  -------------------
+== 5.1 CREARE UN TIPO ==
+
     - Vai su "Admin Dashboard" > "Tipi Gara"
     - Inserisci codice (unico) e descrizione
     - Il codice viene usato nel menu a tendina delle gare
 
-  5.2 ELIMINARE UN TIPO
-  ----------------------
+== 5.2 ELIMINARE UN TIPO ==
+
     - Clicca "Elimina" accanto al tipo
-    - Attenzione: l'eliminazione non rimuove il tipo dalle gare
-      esistenti, ma non sara' piu' selezionabile per le nuove
+    - L'eliminazione non rimuove il tipo dalle gare esistenti,
+      ma non sara' piu' selezionabile per le nuove
 
+= 6. GESTIONE MEMBRI =
 
-====================================================================
-6.  GESTIONE MEMBRI
-====================================================================
+== 6.1 LISTA MEMBRI ==
 
-  6.1 LISTA MEMBRI
-  -----------------
-    Vai su "Admin Dashboard" > "Membri". Per ogni membro vedi:
-      - Nome
-      - Email
-      - Ruolo (membro / admin)
-      - Stato (attivo / disattivato)
-      - Quante gare ha totalizzato
-      - Pulsanti per azioni rapide
+  Vai su "Admin Dashboard" > "Membri". Per ogni membro vedi:
+    - Nome
+    - Email
+    - Ruolo (membro / admin)
+    - Stato (attivo / disattivato)
+    - Quante gare ha totalizzato
+    - Pulsanti per azioni rapide
 
-  6.2 CAMBIARE RUOLO
-  -------------------
-    Dal menu a tendina "Ruolo" nella lista membri, seleziona
-    "membro" o "admin" e clicca "Salva". La modifica viene
-    tracciata nell'audit log.
+== 6.2 CAMBIARE RUOLO ==
 
-   6.3 ATTIVARE / DISATTIVARE UN MEMBRO
-   -------------------------------------
-     Clicca "Attiva" o "Disattiva" accanto al membro.
-     Un membro disattivato non puo' fare login.
-     NON puoi disattivare te stesso.
+  Dal menu a tendina "Ruolo" nella lista membri, seleziona
+  "membro" o "admin" e clicca "Salva". La modifica viene
+  tracciata nell'audit log.
 
-   6.4 CAMBIARE EMAIL O PASSWORD DI UN MEMBRO
-   --------------------------------------------
-     Nella lista membri, ogni riga ha i pulsanti "Email" e
-     "Password" (non compaiono sulla tua riga).
-       - Clicca "Email" per aprire una finestra modale dove
-         inserire la nuova email del membro
-       - Clicca "Password" per aprire una finestra modale dove
-         inserire la nuova password (due volte per conferma)
-     Le modifiche vengono registrate nell'audit log.
+== 6.3 ATTIVARE / DISATTIVARE UN MEMBRO ==
 
-     I membri possono anche cambiare da soli la propria email
-     o password dalla pagina "Impostazioni" (menu in alto).
+  Clicca "Attiva" o "Disattiva" accanto al membro.
+  Un membro disattivato non puo' fare login.
 
+  [WARNING] Non puoi disattivare il tuo stesso account.
 
-====================================================================
-7.  TOKEN DI REGISTRAZIONE E INVITI
-====================================================================
+== 6.4 CAMBIARE EMAIL O PASSWORD DI UN MEMBRO ==
+
+  Nella lista membri, ogni riga ha i pulsanti "Email" e
+  "Password" (non compaiono sulla tua riga).
+    - Clicca "Email" per aprire una finestra modale dove
+      inserire la nuova email del membro
+    - Clicca "Password" per aprire una finestra modale dove
+      inserire la nuova password (due volte per conferma)
+  Le modifiche vengono registrate nell'audit log.
+
+  [TIP] I membri possono anche cambiare da soli la propria email
+  o password dalla pagina "Impostazioni" (menu in alto).
+
+= 7. TOKEN DI REGISTRAZIONE E INVITI =
 
   L'iscrizione e' su invito tramite token temporaneo.
 
-  7.1 GENERARE UN TOKEN
-  ----------------------
+== 7.1 GENERARE UN TOKEN ==
+
     - Vai su "Admin Dashboard" > "Token di Registrazione"
     - Clicca "Genera Token"
     - Copia il link generato e invialo al nuovo utente
       (es. via email o WhatsApp)
 
-  7.2 COME FUNZIONA
-  ------------------
+== 7.2 COME FUNZIONA ==
+
     - Il token e' una stringa casuale memorizzata in memoria
       (non sul database)
     - I token vengono PERSI al riavvio del server
@@ -196,64 +155,56 @@ INDICE
       (non riutilizzabile)
     - La pagina dei token mostra tutti quelli ancora attivi
 
-  7.3 REGISTRAZIONE NUOVO UTENTE
-  -------------------------------
-    Il nuovo utente apre il link, inserisce nome, email,
-    password e il token (precompilato nel link).
-    Se il token non e' valido, la registrazione fallisce.
+== 7.3 REGISTRAZIONE NUOVO UTENTE ==
 
+  Il nuovo utente apre il link, inserisce nome, email,
+  password e il token (precompilato nel link).
+  Se il token non e' valido, la registrazione fallisce.
 
-====================================================================
-8.  PARTECIPAZIONE E OVERRIDE ADMIN
-====================================================================
+= 8. PARTECIPAZIONE E OVERRIDE ADMIN =
 
-  8.1 PARTECIPAZIONE PERSONALE
-  ------------------------------
-    Come admin partecipi normalmente alle gare (SI/NO/INDECISO)
-    uguale a qualsiasi membro.
+== 8.1 PARTECIPAZIONE PERSONALE ==
 
-  8.2 OVERRIDE ADMIN
-  -------------------
-    Dalla pagina di dettaglio di una gara, puoi modificare
-    la partecipazione di QUALSIASI membro:
-      - Cambiare lo stato (SI/NO/INDECISO)
-      - Impostare il flag macchina
-    L'override FUNZIONA anche dopo la scadenza conferma.
-    Le modifiche vengono tracciate nell'audit log con la
-    dicitura "status (admin override)".
+  Come admin partecipi normalmente alle gare (SI/NO/INDECISO)
+  uguale a qualsiasi membro.
 
+== 8.2 OVERRIDE ADMIN ==
 
-====================================================================
-9.  REPORT E STATISTICHE
-====================================================================
+  Dalla pagina di dettaglio di una gara, puoi modificare
+  la partecipazione di QUALSIASI membro:
+    - Cambiare lo stato (SI/NO/INDECISO)
+    - Impostare il flag macchina
+  L'override FUNZIONA anche dopo la scadenza conferma.
 
-  Vai su "Report" nel menu (solo admin). La pagina mostra:
+  [TIP] Le modifiche tramite override vengono tracciate nell'audit log
+  con la dicitura "status (admin override)".
 
-  9.1 STATISTICHE MEMBRI
-  -----------------------
-    Per ogni membro attivo:
-      - Totale risposte date
-      - Conteggio SI / NO / INDECISO
+= 9. REPORT E STATISTICHE =
 
-  9.2 STATISTICHE GARE
-  ---------------------
-    Per ogni gara:
-      - Descrizione e data
-      - Stato
-      - Totale partecipazioni
-      - Conteggio SI / NO / INDECISO
+  Vai su "Report" nel menu (solo admin).
 
-  9.3 RIEPILOGO
-  --------------
-    In alto:
-      - Totale membri attivi
-      - Totale gare
-      - Gare confermate
+== 9.1 STATISTICHE MEMBRI ==
 
+  Per ogni membro attivo:
+    - Totale risposte date
+    - Conteggio SI / NO / INDECISO
 
-====================================================================
-10.  CRONOLOGIA AUDIT LOG
-====================================================================
+== 9.2 STATISTICHE GARE ==
+
+  Per ogni gara:
+    - Descrizione e data
+    - Stato
+    - Totale partecipazioni
+    - Conteggio SI / NO / INDECISO
+
+== 9.3 RIEPILOGO ==
+
+  In alto:
+    - Totale membri attivi
+    - Totale gare
+    - Gare confermate
+
+= 10. CRONOLOGIA AUDIT LOG =
 
   Vai su "Cronologia" nel menu (solo admin). Mostra gli
   ultimi 200 eventi in ordine cronologico inverso.
@@ -272,38 +223,28 @@ INDICE
     - Cambio ruolo membri
     - Attivazione / disattivazione membri
 
-
-====================================================================
-11.  ANAGRAFICA AMMINISTRATORI
-====================================================================
+= 11. ANAGRAFICA AMMINISTRATORI =
 
   Per creare un nuovo admin:
     1. Genera un token di registrazione
     2. Il nuovo utente si registra come membro
-    3. Vai su "Membri" e cambia il suo ruolo da "membro" ad
-       "admin"
+    3. Vai su "Membri" e cambia il suo ruolo da "membro" ad "admin"
 
   Ogni admin puo' cambiare la propria password dalla pagina
   "Impostazioni" (menu in alto). Un admin puo' cambiare
   password ed email di qualsiasi altro utente dalla pagina
   "Membri".
 
+= 12. GLOSSARIO =
 
-====================================================================
-12.  GLOSSARIO
-====================================================================
-
-  Gara          — Evento su pista, puo' durare piu' giorni
-  Scadenza      — Data entro cui i membri devono confermare
-  conferma        la partecipazione
-  SI/NO/        — Stati di partecipazione (tri-stato, non booleano)
-  INDECISO
-  Flag macchina — Indica se il membro porta l'auto al seguito
-  Nota          — Appunto privato del membro per una gara
-  personale       (visibile solo al membro e all'admin)
-  Note auto     — Note dell'admin sulla gestione macchine
-                  (visibili a tutti)
-  Token         — Stringa usa-e-getta per l'iscrizione su invito
-  Audit log     — Registro cronologico di tutte le modifiche
-  Override      — Modifica admin della partecipazione di un membro
-                  (anche dopo scadenza)
+[GLOSSARY]
+Gara — Evento su pista, puo' durare piu' giorni
+Scadenza conferma — Data entro cui i membri devono confermare la partecipazione
+SI/NO/INDECISO — Stati di partecipazione (tri-stato, non booleano)
+Flag macchina — Indica se il membro porta l'auto al seguito
+Nota personale — Appunto privato del membro per una gara (visibile solo al membro e all'admin)
+Note auto — Note dell'admin sulla gestione macchine (visibili a tutti)
+Token — Stringa usa-e-getta per l'iscrizione su invito
+Audit log — Registro cronologico di tutte le modifiche
+Override — Modifica admin della partecipazione di un membro (anche dopo scadenza)
+[/GLOSSARY]
