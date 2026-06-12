@@ -33,7 +33,7 @@ def parse_date_cell(value) -> datetime | None:
     if isinstance(value, str):
         try:
             return dateparser.parse(value, dayfirst=True)
-        except ValueError, TypeError:
+        except (ValueError, TypeError):
             return None
     return None
 
