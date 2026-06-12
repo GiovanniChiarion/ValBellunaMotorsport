@@ -22,7 +22,7 @@ Kart association calendar app — Flask 3.1, SQLAlchemy 2.0, Flask-JWT-Extended,
 
 | Blueprint | Prefix | Key routes |
 |-----------|--------|------------|
-| `auth` | `/auth` | GET/POST login, logout, register, settings, change-password/email, admin change-credentials, token generation |
+| `auth` | `/auth` | GET/POST login, logout, register, settings, change-password/email, admin change-credentials, token generation, admin delete user |
 | `races` | `/races` | Calendar (year filter), detail, CRUD, admin dashboard/members/types, export (superadmin), import (superadmin) |
 | `participation` | `/participation` | Set status, update note, toggle macchina, admin override |
 | `reports` | `/reports` | Aggregate stats (admin-only, filters `ruolo != "superadmin"`) |
@@ -50,6 +50,7 @@ Kart association calendar app — Flask 3.1, SQLAlchemy 2.0, Flask-JWT-Extended,
 - `scadenza_conferma` checked against `datetime.now(UTC).date()` in participation routes
 - Calendar view uses `func.strftime("%Y", Race.data_inizio)` — SQLite-specific, not portable
 - Alembic migrations exist (`alembic/versions/`) but `before_request` auto-creates tables, so migrations are optional
+- All user emails use `@valbellunamotorsport.it` domain, generated from `User.nome` (lowercased, spaces → dots)
 
 ## Templates
 

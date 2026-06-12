@@ -99,7 +99,25 @@
         {% set start_date = race.data_inizio.strftime('%d/%m/%Y') if race.data_inizio else '' %}
         {% set end_date = race.data_fine.strftime('%d/%m/%Y') if race.data_fine else '' %}
 
-        <div class="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm card-hover" x-data="{ open: false }">
+        {% if race.data_fine and race.data_fine < today %}
+        {% set stato_dinamico = 'conclusa' %}
+        {% set bar_color = 'bg-gray-400' %}
+        {% set card_opacity = 'opacity-75' %}
+        {% elif race.data_inizio and race.data_inizio <= today and (not race.data_fine or race.data_fine >= today) %}
+        {% set stato_dinamico = 'in_corso' %}
+        {% set bar_color = 'bg-orange-500' %}
+        {% set card_opacity = '' %}
+        {% elif race.data_inizio and race.data_inizio > today %}
+        {% set stato_dinamico = 'futura' %}
+        {% set bar_color = 'bg-green-500' %}
+        {% set card_opacity = '' %}
+        {% else %}
+        {% set stato_dinamico = '' %}
+        {% set bar_color = 'bg-red-600' %}
+        {% set card_opacity = '' %}
+        {% endif %}
+
+        <div class="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm card-hover {{ card_opacity }}{% if stato_dinamico == 'in_corso' %} border-orange-200 dark:border-orange-800{% endif %}{% if stato_dinamico == 'conclusa' %} bg-gray-50 dark:bg-slate-800/50{% endif %}" x-data="{ open: false }">
             <div class="px-5 py-4 flex items-center cursor-pointer gap-4" @click="open = !open">
                 <div class="hidden sm:flex flex-col items-center justify-center min-w-[60px]">
                     <span class="text-2xl font-extrabold text-gray-900 dark:text-white leading-none">
@@ -113,11 +131,25 @@
                     </span>
                 </div>
 
-                <div class="min-w-[3px] self-stretch bg-red-600 rounded-full"></div>
+                <div class="min-w-[3px] self-stretch {{ bar_color }} rounded-full"></div>
 
                 <div class="flex-1 min-w-0">
                     <h3 class="text-base font-bold text-gray-900 dark:text-white truncate">{{ race.descrizione }}</h3>
                     <div class="flex flex-wrap items-center gap-1.5 mt-1">
+                        {% if stato_dinamico == 'conclusa' %}
+                        <span class="inline-flex items-center text-[11px] font-semibold uppercase tracking-wider bg-gray-100 dark:bg-slate-700 text-gray-500 dark:text-slate-400 px-2 py-0.5 rounded-md">
+                            Conclusa
+                        </span>
+                        {% elif stato_dinamico == 'in_corso' %}
+                        <span class="inline-flex items-center text-[11px] font-semibold uppercase tracking-wider bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 px-2 py-0.5 rounded-md">
+                            <span class="size-1.5 rounded-full bg-orange-500 mr-1 inline-block animate-pulse"></span>
+                            In corso
+                        </span>
+                        {% elif stato_dinamico == 'futura' %}
+                        <span class="inline-flex items-center text-[11px] font-semibold uppercase tracking-wider bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 px-2 py-0.5 rounded-md">
+                            Futura
+                        </span>
+                        {% endif %}
                         <span class="inline-flex items-center text-xs text-gray-500 dark:text-slate-400">
                             {{ icon_calendar(class="size-3.5 mr-0.5") }}
                             {{ start_date }}{% if end_date and end_date != start_date %} — {{ end_date }}{% endif %}
@@ -208,10 +240,24 @@
 
                     <div class="flex items-center justify-between">
                         {% if race.scadenza_conferma %}
-                        <span class="inline-flex items-center text-xs text-gray-400 dark:text-slate-500">
-                            {{ icon_alert(class="size-3 mr-0.5") }}
+                        {% set giorni_mancanti = (race.scadenza_conferma - today).days %}
+                        {% if giorni_mancanti <= 0 %}
+                        <span class="inline-flex items-center gap-1 text-xs font-semibold bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-700 px-2.5 py-1 rounded-lg">
+                            {{ icon_alert(class="size-3") }}
+                            Scaduta!
+                            <span class="font-normal text-red-500 dark:text-red-400">Non puoi più modificare</span>
+                        </span>
+                        {% elif giorni_mancanti <= 7 %}
+                        <span class="inline-flex items-center gap-1 text-xs font-semibold bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-700 px-2.5 py-1 rounded-lg">
+                            <svg class="size-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            Scade tra {{ giorni_mancanti }} giorno{% if giorni_mancanti != 1 %}g{% endif %}
+                        </span>
+                        {% else %}
+                        <span class="inline-flex items-center gap-1 text-xs text-gray-500 dark:text-slate-400 bg-gray-50 dark:bg-slate-700/50 px-2.5 py-1 rounded-lg">
+                            <svg class="size-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                             Conferma entro: {{ race.scadenza_conferma.strftime('%d/%m/%Y') }}
                         </span>
+                        {% endif %}
                         {% else %}
                         <span></span>
                         {% endif %}

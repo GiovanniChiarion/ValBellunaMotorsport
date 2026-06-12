@@ -207,7 +207,14 @@
             });
             if (btn) btn.classList.remove('btn-status-loading');
             if (r && r.ok) { showToast('Aggiornato', 'success'); location.reload(); }
-            else { showToast('Errore', 'error'); }
+            else {
+                try {
+                    const data = await r.json();
+                    showToast(data.error || data.detail || 'Errore', 'error');
+                } catch {
+                    showToast('Errore', 'error');
+                }
+            }
         }
 
         async function toggleMacchina(raceId, cb) {

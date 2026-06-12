@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block title %}Gestione Membri — ValBelluna Motorsport{% endblock %}
 {% block content %}
-{% from '_icons.html' import icon_users, icon_key, icon_check_circle, icon_x_circle %}
+{% from '_icons.html' import icon_users, icon_key, icon_check_circle, icon_x_circle, icon_trash %}
 
 <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
     <div class="flex items-center space-x-3">
@@ -30,7 +30,7 @@
             </thead>
             <tbody class="divide-y divide-gray-100 dark:divide-slate-700/50">
                 {% for m in members %}
-                <tr class="hover:bg-gray-50 dark:hover:bg-slate-700/30 transition-colors duration-150" x-data="{ showEmailModal: false, showPwdModal: false }">
+                <tr class="hover:bg-gray-50 dark:hover:bg-slate-700/30 transition-colors duration-150" x-data="{ showEmailModal: false, showPwdModal: false, showDeleteModal: false }">
                     <td class="px-4 py-3.5 text-sm font-medium text-gray-900 dark:text-white">
                         <div class="flex items-center space-x-2">
                             <div class="size-7 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center text-xs font-bold text-red-700 dark:text-red-400">
@@ -65,6 +65,26 @@
                             <button onclick="toggleUser({{ m.id }})" class="px-3 py-1.5 rounded-xl text-xs font-medium transition-all duration-150 {% if m.attivo %}bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 border border-red-200 dark:border-red-800{% else %}bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/30 border border-green-200 dark:border-green-800{% endif %}">
                                 {{ 'Disattiva' if m.attivo else 'Attiva' }}
                             </button>
+                            <button @click="showDeleteModal = true" class="px-2 py-1.5 rounded-lg text-xs font-medium bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 border border-red-200 dark:border-red-800 transition-all duration-150">
+                                {{ icon_trash(class="size-3.5 inline") }}
+                            </button>
+
+                            <div x-show="showDeleteModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center" @click.away="showDeleteModal = false" x-transition.opacity>
+                                <div class="fixed inset-0 bg-black/40"></div>
+                                <div class="relative bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-slate-700 p-6 w-full max-w-sm mx-4" @click.stop>
+                                    <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2">Elimina utente</h3>
+                                    <p class="text-sm text-gray-500 dark:text-slate-400 mb-2">Stai per eliminare <strong>{{ m.nome }}</strong> ({{ m.email }}).</p>
+                                    <p class="text-sm text-red-600 dark:text-red-400 font-medium mb-4">Tutti i dati associati (partecipazioni, log) verranno cancellati permanentemente.</p>
+                                    <div class="flex items-center space-x-2">
+                                        <button @click="deleteUser({{ m.id }})" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-medium shadow-sm transition-all duration-150">
+                                            Elimina
+                                        </button>
+                                        <button type="button" @click="showDeleteModal = false" class="px-4 py-2 bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-slate-300 rounded-xl text-sm font-medium hover:bg-gray-200 dark:hover:bg-slate-600 transition-all duration-150">
+                                            Annulla
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
 
                             <div x-show="showEmailModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center" @click.away="showEmailModal = false" x-transition.opacity>
                                 <div class="fixed inset-0 bg-black/40"></div>
@@ -163,6 +183,17 @@ function adminChangeEmail(userId, event) {
         body: JSON.stringify({ new_email: data.get('new_email') })
     }).then(r => {
         if (r.ok) { showToast('Email cambiata', 'success'); location.reload(); }
+        else { r.json().then(e => showToast(e.detail, 'error')); }
+    });
+}
+
+function deleteUser(userId) {
+    const token = localStorage.getItem('token');
+    fetch(`/auth/admin/${userId}/delete`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+    }).then(r => {
+        if (r.ok) { showToast('Utente eliminato', 'success'); location.reload(); }
         else { r.json().then(e => showToast(e.detail, 'error')); }
     });
 }

@@ -40,6 +40,22 @@
                     {{ icon_flag(class="size-3 mr-1") }}
                     {{ race.stato }}
                 </span>
+                {% if race.data_fine and race.data_fine < today %}
+                <span class="inline-flex items-center px-3 py-1.5 rounded-xl text-xs font-bold bg-gray-100 dark:bg-slate-700 text-gray-500 dark:text-slate-400 border border-gray-200 dark:border-slate-600">
+                    <svg class="size-3 mr-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12.5L11 15l4-4"/><path d="M12 21a9 9 0 100-18 9 9 0 000 18z"/></svg>
+                    Conclusa
+                </span>
+                {% elif race.data_inizio and race.data_inizio <= today and (not race.data_fine or race.data_fine >= today) %}
+                <span class="inline-flex items-center px-3 py-1.5 rounded-xl text-xs font-bold bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 border border-orange-200 dark:border-orange-700">
+                    <span class="size-1.5 rounded-full bg-orange-500 mr-1.5 inline-block animate-pulse"></span>
+                    In corso
+                </span>
+                {% elif race.data_inizio and race.data_inizio > today %}
+                <span class="inline-flex items-center px-3 py-1.5 rounded-xl text-xs font-bold bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 border border-green-200 dark:border-green-700">
+                    <svg class="size-3 mr-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg>
+                    Futura
+                </span>
+                {% endif %}
             </div>
         </div>
 
@@ -55,10 +71,23 @@
 
         <div class="mt-4 flex flex-wrap items-center gap-3">
             {% if race.scadenza_conferma %}
-            <span class="inline-flex items-center text-sm text-gray-500 dark:text-slate-400">
-                <svg class="size-4 mr-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            {% set giorni_mancanti = (race.scadenza_conferma - today).days %}
+            {% if giorni_mancanti <= 0 %}
+            <span class="inline-flex items-center gap-1.5 text-sm font-semibold bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-700 px-3 py-1.5 rounded-xl">
+                <svg class="size-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                Scaduta!
+            </span>
+            {% elif giorni_mancanti <= 7 %}
+            <span class="inline-flex items-center gap-1.5 text-sm font-semibold bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-700 px-3 py-1.5 rounded-xl">
+                <svg class="size-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                Scade tra {{ giorni_mancanti }} giorno{% if giorni_mancanti != 1 %}g{% endif %}
+            </span>
+            {% else %}
+            <span class="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-slate-400">
+                <svg class="size-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                 Conferma entro: {{ race.scadenza_conferma.strftime('%d/%m/%Y') }}
             </span>
+            {% endif %}
             {% endif %}
 
             {% if is_admin %}

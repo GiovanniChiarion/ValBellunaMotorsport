@@ -135,6 +135,15 @@
   [TIP] I membri possono anche cambiare da soli la propria email
   o password dalla pagina "Impostazioni" (menu in alto).
 
+== 6.5 ELIMINARE UN MEMBRO ==
+
+  Nella lista membri, clicca l'icona cestino accanto al membro
+  da eliminare. Apparira' una finestra di conferma.
+
+  [WARNING] L'eliminazione e' irreversibile. Tutti i dati del
+  membro (partecipazioni, log) vengono cancellati definitivamente.
+  Non puoi eliminare te stesso ne' un superadmin.
+
 = 7. TOKEN DI REGISTRAZIONE E INVITI =
 
   L'iscrizione e' su invito tramite token temporaneo.

@@ -13,7 +13,7 @@ from app.forms import (
     SelfChangeEmailForm,
     SelfChangePasswordForm,
 )
-from app.models import User
+from app.models import AuditLog, User
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 
@@ -261,6 +261,34 @@ def admin_change_user_email(user_id):
         db.commit()
 
     return jsonify({"message": "Email cambiata con successo"})
+
+
+@auth_bp.route("/admin/<int:user_id>/delete", methods=["POST"])
+@admin_required
+def admin_delete_user(user_id):
+    with get_db() as db:
+        user = db.query(User).filter(User.id == user_id).first()
+        if not user:
+            return jsonify({"detail": "Utente non trovato"}), 404
+        if user.id == g.current_user.id:
+            return jsonify({"detail": "Non puoi eliminare te stesso"}), 400
+        if user.ruolo == "superadmin":
+            return jsonify({"detail": "Non puoi eliminare un superadmin"}), 403
+
+        nome = user.nome
+        email = user.email
+        db.add(
+            AuditLog(
+                user_id=g.current_user.id,
+                field="user.deleted",
+                old_value=None,
+                new_value=f"{nome} ({email})",
+            )
+        )
+        db.delete(user)
+        db.commit()
+
+    return jsonify({"message": f"Utente {nome} eliminato"}), 200
 
 
 @auth_bp.route("/admin/tokens", methods=["GET"])
