@@ -73,7 +73,15 @@ create-superadmin <email> <nome>  delete-user <email> [-y]
 
 ## PythonAnywhere
 
-WSGI file at `/var/www/GChiarion_pythonanywhere_com_wsgi.py`. Static Web tab: `/static/` → `/home/GChiarion/KartProject/app/static/`. Env vars: `DATABASE_URL`, `JWT_SECRET`, `SECRET_KEY`, `DEBUG=false`. Reload after every `git pull`.
+```
+git clone git@github.com:GiovanniChiarion/ValBellunaMotorsport.git
+```
+
+WSGI file at `/var/www/GChiarion_pythonanywhere_com_wsgi.py` — update path:
+```python
+sys.path.insert(0, '/home/GChiarion/ValBellunaMotorsport')
+```
+Static Web tab: `/static/` → `/home/GChiarion/ValBellunaMotorsport/app/static/`. Env vars: `DATABASE_URL`, `JWT_SECRET`, `SECRET_KEY`, `DEBUG=false`. Reload after every `git pull`.
 
 ## Seed
 
