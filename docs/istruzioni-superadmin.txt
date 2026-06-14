@@ -1,4 +1,4 @@
-[COVER subtitle="Backup, ripristino e gestione di sistema"|role=Guida SuperAdmin|date=11/06/2026]
+[COVER subtitle="Backup, ripristino e gestione di sistema"|role=Guida SuperAdmin|date=14/06/2026]
 
 = 1. PANORAMICA =
 
@@ -32,6 +32,13 @@
   [WARNING] Cambia IMMEDIATAMENTE la password di default.
   Vai su "Impostazioni" (menu in alto, icona ingranaggio)
   per cambiare password o email.
+
+= 2.5 TEMA SCURO / CHIARO =
+
+  Clicca l'icona sole/luna in alto a destra per passare dalla
+  modalita' chiara a quella scura. La preferenza viene salvata
+  automaticamente. Al primo accesso, il tema segue le
+  impostazioni del tuo sistema operativo.
 
 = 3. COMPORTAMENTO INVISIBILE =
 
@@ -93,19 +100,35 @@
   [WARNING] Il ripristino sovrascrive irreversibilmente tutti i dati
   presenti. Effettua un backup preventivo prima di procedere.
 
-= 6. ESPORTAZIONE STORICO AUDIT LOG =
+= 6. STORICO AUDIT LOG =
 
-  Scarica un file JSON con TUTTI gli eventi dell'audit log
-  (senza limite di righe).
+  La pagina "Storico" mostra il registro cronologico di
+  tutte le modifiche al sistema. E' accessibile solo ai
+  SuperAdmin.
 
-== 6.1 DAL BROWSER ==
+== 6.1 PAGINA WEB ==
 
     - Vai su "Storico" nel menu in alto
-    - Clicca "Esporta Storico"
-    Oppure apri direttamente:
-      [CODE] http://localhost:8000/history/export
+    - Vedrai 50 eventi per pagina in ordine cronologico
+      inverso (dal piu' recente)
+    - Puoi filtrare per:
+        * Azione (LOGIN, CREATE, UPDATE, DELETE, ecc.)
+        * Utente
+        * Data (da / a)
+        * Indirizzo IP
+        * Descrizione gara
+    - Usa la paginazione in fondo per navigare
 
-== 6.2 CONTENUTO DEL FILE ==
+== 6.2 ESPORTAZIONE JSON ==
+
+    - Nella pagina "Storico", clicca "Esporta Storico"
+    - Oppure apri direttamente:
+      [CODE] http://localhost:8000/history/export
+    - L'export rispetta gli STESSI filtri applicati nella
+      pagina web (se non ci sono filtri, esporta tutto)
+    - Scarica un file JSON senza limite di righe
+
+== 6.3 CONTENUTO DEL FILE ==
 
   Ogni evento include:
     - Data e ora
@@ -113,10 +136,8 @@
     - Descrizione della gara interessata
     - Campo modificato
     - Valore precedente e nuovo valore
-
-  A differenza della pagina web (che mostra solo gli
-  ultimi 200 eventi), l'export contiene TUTTO lo storico
-  senza limiti.
+    - Indirizzo IP
+    - User agent del browser
 
 = 7. RIGA DI COMANDO (CLI) =
 
@@ -174,6 +195,15 @@
 
   [CODE] .venv/bin/python -m app.cli delete-user \
     vecchio.utente@example.com -y
+
+== 7.7 CANCELLA LOG ==
+
+  [CODE] .venv/bin/python -m app.cli clear-logs
+
+  Cancella TUTTE le voci dello storico audit log.
+
+  [WARNING] Operazione irreversibile. Esegui un backup prima
+  di procedere se vuoi conservare i log.
 
 = 8. GESTIONE ACCOUNT SUPERADMIN =
 

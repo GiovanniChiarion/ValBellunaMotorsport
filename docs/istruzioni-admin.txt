@@ -1,4 +1,4 @@
-[COVER subtitle="Gestione completa della piattaforma"|role=Guida Amministratore|date=11/06/2026]
+[COVER subtitle="Gestione completa della piattaforma"|role=Guida Amministratore|date=14/06/2026]
 
 = 1. PANORAMICA =
 
@@ -48,6 +48,13 @@
     - Conteggio SI e macchine
 
   Per cambiare anno usa il selettore in alto.
+
+= 3.5 TEMA SCURO / CHIARO =
+
+  Clicca l'icona sole/luna in alto a destra per passare dalla
+  modalita' chiara a quella scura. La preferenza viene salvata
+  automaticamente. Al primo accesso, il tema segue le
+  impostazioni del tuo sistema operativo.
 
 = 4. GESTIONE GARE (CRUD) =
 
@@ -215,22 +222,9 @@
 
 = 10. CRONOLOGIA AUDIT LOG =
 
-  Vai su "Cronologia" nel menu (solo admin). Mostra gli
-  ultimi 200 eventi in ordine cronologico inverso.
-
-  Ogni evento registra:
-    - Data e ora
-    - Utente che ha fatto la modifica
-    - Gara interessata (se applicabile)
-    - Campo modificato
-    - Valore precedente e nuovo valore
-
-  Vengono tracciate:
-    - Creazione, modifica, eliminazione gare
-    - Cambi di partecipazione (utente e admin override)
-    - Modifica note personali
-    - Cambio ruolo membri
-    - Attivazione / disattivazione membri
+  La cronologia delle modifiche e' accessibile solo ai
+  SuperAdmin (vedi guida SuperAdmin). Come admin non puoi
+  visualizzare questa pagina.
 
 = 11. ANAGRAFICA AMMINISTRATORI =
 

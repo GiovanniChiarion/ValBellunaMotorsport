@@ -1,20 +1,14 @@
-## /aggiorna
+## aggiorna
 
-Trigger: digitare `/aggiorna`. Workflow:
+Quando ti viene chiesto di aggiornare, esegui questo workflow:
 
 1. Leggi AGENTS.md e i file blueprint (`app/blueprints/*.py`), `app/cli.py`, `app/models.py`, `app/config.py`
 2. Confronta stato attuale del progetto con AGENTS.md:
    - Tabella blueprints: nuovi endpoint? permessi cambiati? (es. history è `@superadmin_required`)
    - Comandi CLI: modifiche/aggiunte? (es. `clear-logs`)
    - Sezioni App structure, Auth & roles, DB quirks, Templates, Verify
-3. Se serve, riscrivi AGENTS.md con le modifiche
-4. Esegui verification:
-   ```bash
-   .venv/bin/ruff check app/ tests/
-   .venv/bin/ruff format --check app/ tests/
-   .venv/bin/pytest tests/ -q
-   ```
-   Se fail → fermati, mostra errori
+3. Se serve, aggiorna la documentazione (`docs`). Se viene aggiornata, genera anche i relativi pdf.
+4. Se serve, riscrivi AGENTS.md con le modifiche
 5. `git add -A`
 6. `git commit -m "aggiorna: [breve sommario modifiche]"`
 7. `git push`
@@ -25,6 +19,10 @@ Trigger: digitare `/aggiorna`. Workflow:
 # ValBelluna Motorsport
 
 Kart association calendar app — Flask 3.1, SQLAlchemy 2.0, Flask-JWT-Extended, Jinja2 + HTMX 2.0 + Alpine.js 3.14 + Tailwind CSS (CDN). Deployed PythonAnywhere. Python 3.14 (pyright). FastAPI→Flask rewrite (`docs/rewrite-log.md`).
+
+# Documentation
+
+When a new feature is implemented, make sure it is documented in `docs/`. If txt files are modified, generate always also the relative pdfs.
 
 ## Quick start
 
@@ -55,7 +53,7 @@ DEBUG=true
 
 | Prefix | File | Does |
 |--------|------|------|
-| `/auth` | `blueprints/auth.py` | Login, logout, register, settings, change-password/email, admin change-credentials, token gen, admin delete user |
+| `/auth` | `blueprints/auth.py` | Login, logout, register, settings, change-password/email, `GET /me` (current user), admin change-credentials, token gen/manage, admin delete user |
 | `/races` | `blueprints/races.py` | Calendar (year filter), detail, CRUD, admin dashboard/members/types, export (superadmin), import (superadmin) |
 | `/participation` | `blueprints/participation.py` | Set status, update note, toggle macchina, admin override |
 | `/reports` | `blueprints/reports.py` | Aggregate stats (admin-only, `ruolo != "superadmin"` filter) |
@@ -72,6 +70,8 @@ DEBUG=true
 - `pydantic-settings` (`app/config.py`) reads `.env` — `get_settings()` is `@lru_cache`d
 - `opencode.json` has `"lsp": true` — pyright type-checking active in editor
 - Dark mode: class-based on `<html>`, stored in `localStorage('theme')`, respects `prefers-color-scheme`
+- `app/features.py`: feature flags system (`calendar_filters` in beta for superadmin)
+- `app/audit.py`: `log_action()` helper — auto-captures IP, UA, and current user from Flask `g`/`request`
 
 ## Auth & roles
 
@@ -125,7 +125,7 @@ Reads `TEST Calendario 2026 Valbelluna Motorsport.xlsx`. On PythonAnywhere file 
 ## Tests
 
 - `tests/conftest.py` sets `DATABASE_URL=sqlite:///:memory:`, `SECRET_KEY`, `JWT_SECRET` **before** importing app (env var order matters)
-- `app` fixture: session-scoped `create_all`/`drop_all`; `db` fixture: `get_db()` session yield
+- `app` fixture: function-scoped `create_all`/`drop_all`; `db` fixture: `get_db()` session yield
 - Token auth: `create_access_token(identity=str(user.id))` → `Authorization: Bearer` header
 - Fixtures: `app`, `client`, `db`, `admin_user`, `superadmin_user`, `normal_user`, `*_token`, `auth_headers`
 

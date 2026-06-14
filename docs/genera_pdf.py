@@ -156,6 +156,7 @@ class SectionHeader(Flowable):
     def draw(self):
         c = self.canv
         w, h = self.width, self.height
+        c.bookmarkPage(f'sec-{self.number}')
         c.setFillColor(ACCENT2)
         c.roundRect(0, 0, w, h, 4, fill=1, stroke=0)
         c.setFillColor(self.accent)
@@ -234,15 +235,20 @@ def make_toc(story, styles, items, accent):
     story.append(HRFlowable(width='100%', thickness=2, color=accent,
                             spaceAfter=8 * mm))
 
+    accent_hex = f'#{accent.hexval()[2:]}'
     toc_rows = []
     for num, label in items:
-        num_p = Paragraph(f"<font color='#{accent.hexval()[2:]}'>{num}</font>",
+        num_p = Paragraph(
+            f'<a href="#sec-{num}" color="{accent_hex}">'
+            f'<font color="{accent_hex}">{num}</font></a>',
             ParagraphStyle('tn', fontName='Helvetica-Bold', fontSize=11,
                            textColor=accent, alignment=TA_RIGHT)
         )
-        lbl_p = Paragraph(label,
+        lbl_p = Paragraph(
+            f'<a href="#sec-{num}" color="{accent_hex}">'
+            f'<font color="{accent_hex}"><u>{label}</u></font></a>',
             ParagraphStyle('tl', fontName='Helvetica', fontSize=11,
-                           textColor=TEXT)
+                           textColor=accent)
         )
         toc_rows.append([num_p, lbl_p])
 
