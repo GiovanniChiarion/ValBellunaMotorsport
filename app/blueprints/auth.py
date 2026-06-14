@@ -417,12 +417,22 @@ def admin_tokens_page():
     from datetime import datetime as dt
 
     with get_db() as db:
-        tokens = (
+        rows = (
             db.query(InviteToken)
             .filter(InviteToken.used_at.is_(None))
             .order_by(InviteToken.created_at.desc())
             .all()
         )
+        tokens = [
+            {
+                "id": t.id,
+                "token": t.token,
+                "expires_at": t.expires_at,
+                "created_at": t.created_at,
+                "used_at": t.used_at,
+            }
+            for t in rows
+        ]
     now = dt.now(UTC)
     return render_template("admin/tokens.html", tokens=tokens, now=now)
 
