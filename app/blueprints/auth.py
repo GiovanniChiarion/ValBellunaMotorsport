@@ -5,6 +5,7 @@ from flask_jwt_extended import (
     unset_jwt_cookies,
 )
 
+from app.audit import log_action
 from app.auth import admin_required, hash_password, jwt_required, verify_password
 from app.database import get_db
 from app.forms import (
@@ -39,9 +40,27 @@ def login():
         user = db.query(User).filter(User.email == email, User.attivo == 1).first()
 
     if not user or not verify_password(password, user.password_hash):
+        with get_db() as db:
+            log_action(
+                db=db,
+                action="LOGIN_FAILED",
+                entity_type="auth",
+                description=f"Tentativo di accesso fallito per {email}",
+            )
+            db.commit()
         return jsonify({"detail": "Email o password non validi"}), 401
 
     access_token = create_access_token(identity=str(user.id))
+    with get_db() as db:
+        log_action(
+            db=db,
+            action="LOGIN",
+            entity_type="auth",
+            user_id=user.id,
+            actor_name=user.nome,
+            description=f"{user.nome} ha effettuato l'accesso",
+        )
+        db.commit()
     response = jsonify(
         {
             "access_token": access_token,
@@ -60,6 +79,17 @@ def login():
 
 @auth_bp.route("/logout", methods=["POST"])
 def logout():
+    user = getattr(g, "current_user", None)
+    with get_db() as db:
+        log_action(
+            db=db,
+            action="LOGOUT",
+            entity_type="auth",
+            user_id=user.id if user else None,
+            actor_name=user.nome if user else None,
+            description=f"{user.nome} ha effettuato il logout" if user else "Logout",
+        )
+        db.commit()
     response = jsonify({"message": "Logout effettuato"})
     unset_jwt_cookies(response)
     return response
@@ -102,6 +132,16 @@ def register():
             attivo=1,
         )
         db.add(user)
+        db.flush()
+        log_action(
+            db=db,
+            action="REGISTER",
+            entity_type="user",
+            entity_id=user.id,
+            user_id=user.id,
+            actor_name=user.nome,
+            description=f"{user.nome} si è registrato",
+        )
         db.commit()
         db.refresh(user)
         registration_tokens.discard(token)
@@ -130,6 +170,14 @@ def generate_registration_token():
 
     token = secrets.token_urlsafe(32)
     registration_tokens.add(token)
+    with get_db() as db:
+        log_action(
+            db=db,
+            action="TOKEN_GENERATE",
+            entity_type="auth",
+            description=f"{g.current_user.nome} ha generato un token di registrazione",
+        )
+        db.commit()
     return jsonify({"token": token})
 
 
@@ -181,6 +229,13 @@ def change_own_password():
         if not db_user:
             return jsonify({"detail": "Utente non trovato"}), 404
         db_user.password_hash = hash_password(new_password)
+        log_action(
+            db=db,
+            action="PASSWORD_CHANGE",
+            entity_type="user",
+            entity_id=user.id,
+            description=f"{user.nome} ha cambiato la propria password",
+        )
         db.commit()
 
     return jsonify({"message": "Password cambiata con successo"})
@@ -209,7 +264,18 @@ def change_own_email():
         db_user = db.query(User).filter(User.id == user.id).first()
         if not db_user:
             return jsonify({"detail": "Utente non trovato"}), 404
+        old_email = db_user.email
         db_user.email = new_email
+        log_action(
+            db=db,
+            action="EMAIL_CHANGE",
+            entity_type="user",
+            entity_id=user.id,
+            field="user.email",
+            old_value=old_email,
+            new_value=new_email,
+            description=f"{user.nome} ha cambiato la propria email: {old_email} → {new_email}",
+        )
         db.commit()
 
     return jsonify({"message": "Email cambiata con successo"})
@@ -229,10 +295,17 @@ def admin_change_user_password(user_id):
         return jsonify({"detail": "Le password non coincidono"}), 400
 
     with get_db() as db:
-        user = db.query(User).filter(User.id == user_id).first()
-        if not user:
+        target = db.query(User).filter(User.id == user_id).first()
+        if not target:
             return jsonify({"detail": "Utente non trovato"}), 404
-        user.password_hash = hash_password(new_password)
+        target.password_hash = hash_password(new_password)
+        log_action(
+            db=db,
+            action="PASSWORD_CHANGE",
+            entity_type="user",
+            entity_id=target.id,
+            description=f"{g.current_user.nome} ha cambiato la password di {target.nome}",
+        )
         db.commit()
 
     return jsonify({"message": "Password cambiata con successo"})
@@ -254,10 +327,21 @@ def admin_change_user_email(user_id):
         if existing:
             return jsonify({"detail": "Email già in uso"}), 400
 
-        user = db.query(User).filter(User.id == user_id).first()
-        if not user:
+        target = db.query(User).filter(User.id == user_id).first()
+        if not target:
             return jsonify({"detail": "Utente non trovato"}), 404
-        user.email = new_email
+        old_email = target.email
+        target.email = new_email
+        log_action(
+            db=db,
+            action="EMAIL_CHANGE",
+            entity_type="user",
+            entity_id=target.id,
+            field="user.email",
+            old_value=old_email,
+            new_value=new_email,
+            description=f"{g.current_user.nome} ha cambiato l'email di {target.nome}: {old_email} → {new_email}",
+        )
         db.commit()
 
     return jsonify({"message": "Email cambiata con successo"})
@@ -277,13 +361,14 @@ def admin_delete_user(user_id):
 
         nome = user.nome
         email = user.email
-        db.add(
-            AuditLog(
-                user_id=g.current_user.id,
-                field="user.deleted",
-                old_value=None,
-                new_value=f"{nome} ({email})",
-            )
+        log_action(
+            db=db,
+            action="DELETE",
+            entity_type="user",
+            entity_id=user.id,
+            field="user.deleted",
+            new_value=f"{nome} ({email})",
+            description=f"{g.current_user.nome} ha eliminato {nome} ({email})",
         )
         db.delete(user)
         db.commit()
