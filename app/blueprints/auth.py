@@ -1,3 +1,5 @@
+from datetime import UTC, datetime, timedelta
+
 from flask import Blueprint, g, jsonify, render_template, request
 from flask_jwt_extended import (
     create_access_token,
@@ -14,11 +16,9 @@ from app.forms import (
     SelfChangeEmailForm,
     SelfChangePasswordForm,
 )
-from app.models import AuditLog, User
+from app.models import AuditLog, InviteToken, User
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
-
-registration_tokens: set[str] = set()
 
 
 @auth_bp.route("/login", methods=["GET"])
@@ -98,28 +98,46 @@ def logout():
 @auth_bp.route("/register", methods=["GET"])
 def register_page():
     form = RegisterForm()
-    return render_template("register.html", form=form)
+    token = request.args.get("token", "")
+    valid = False
+    if token:
+        with get_db() as db:
+            t = db.query(InviteToken).filter(
+                InviteToken.token == token,
+                InviteToken.used_at.is_(None),
+            ).first()
+            if t and (t.expires_at is None or t.expires_at > datetime.now(UTC)):
+                valid = True
+    return render_template("register.html", form=form, token=token if valid else "", valid=valid)
 
 
 @auth_bp.route("/register", methods=["POST"])
 def register():
     data = request.get_json(silent=True) or request.form.to_dict()
-    token = data.get("token", "")
-
-    if token not in registration_tokens:
-        return jsonify({"detail": "Token di registrazione non valido"}), 400
-
-    nome = data.get("nome", "").strip()
-    email = data.get("email", "").strip().lower()
-    password = data.get("password", "")
-
-    if not nome or not email or not password:
-        return jsonify({"detail": "Tutti i campi sono obbligatori"}), 400
-
-    if len(password) < 6:
-        return jsonify({"detail": "La password deve essere di almeno 6 caratteri"}), 400
+    token_val = data.get("token", "")
 
     with get_db() as db:
+        token_record = db.query(InviteToken).filter(
+            InviteToken.token == token_val,
+            InviteToken.used_at.is_(None),
+        ).first()
+
+        if not token_record:
+            return jsonify({"detail": "Token di registrazione non valido"}), 400
+
+        if token_record.expires_at and token_record.expires_at < datetime.now(UTC):
+            return jsonify({"detail": "Token scaduto"}), 400
+
+        nome = data.get("nome", "").strip()
+        email = data.get("email", "").strip().lower()
+        password = data.get("password", "")
+
+        if not nome or not email or not password:
+            return jsonify({"detail": "Tutti i campi sono obbligatori"}), 400
+
+        if len(password) < 6:
+            return jsonify({"detail": "La password deve essere di almeno 6 caratteri"}), 400
+
         existing = db.query(User).filter(User.email == email).first()
         if existing:
             return jsonify({"detail": "Email già registrata"}), 400
@@ -133,6 +151,8 @@ def register():
         )
         db.add(user)
         db.flush()
+        token_record.used_at = datetime.now(UTC)
+        token_record.used_by_id = user.id
         log_action(
             db=db,
             action="REGISTER",
@@ -144,7 +164,6 @@ def register():
         )
         db.commit()
         db.refresh(user)
-        registration_tokens.discard(token)
 
     access_token = create_access_token(identity=str(user.id))
     response = jsonify(
@@ -163,22 +182,38 @@ def register():
     return response
 
 
-@auth_bp.route("/register/token", methods=["GET"])
+@auth_bp.route("/register/token", methods=["POST"])
 @admin_required
 def generate_registration_token():
     import secrets
 
-    token = secrets.token_urlsafe(32)
-    registration_tokens.add(token)
+    data = request.get_json(silent=True) or {}
+    expires_in = data.get("expires_in", "never")
+
+    expires_at = None
+    if expires_in == "24h":
+        expires_at = datetime.now(UTC) + timedelta(hours=24)
+    elif expires_in == "7d":
+        expires_at = datetime.now(UTC) + timedelta(days=7)
+    elif expires_in == "30d":
+        expires_at = datetime.now(UTC) + timedelta(days=30)
+
+    token_str = secrets.token_urlsafe(32)
     with get_db() as db:
+        token_record = InviteToken(
+            token=token_str,
+            expires_at=expires_at,
+            created_by_id=g.current_user.id,
+        )
+        db.add(token_record)
         log_action(
             db=db,
             action="TOKEN_GENERATE",
             entity_type="auth",
-            description=f"Token generato da {g.current_user.nome}",
+            description="Token generato",
         )
         db.commit()
-    return jsonify({"token": token})
+    return jsonify({"token": token_str, "expires_at": expires_at.isoformat() if expires_at else None})
 
 
 @auth_bp.route("/me", methods=["GET"])
@@ -304,7 +339,7 @@ def admin_change_user_password(user_id):
             action="PASSWORD_CHANGE",
             entity_type="user",
             entity_id=target.id,
-            description=f"Password cambiata da {g.current_user.nome} per {target.nome}",
+            description=f"Password cambiata per {target.nome}",
         )
         db.commit()
 
@@ -340,7 +375,7 @@ def admin_change_user_email(user_id):
             field="user.email",
             old_value=old_email,
             new_value=new_email,
-            description=f"Email cambiata da {g.current_user.nome} per {target.nome}: {old_email} → {new_email}",
+            description=f"Email cambiata per {target.nome}: {old_email} → {new_email}",
         )
         db.commit()
 
@@ -379,4 +414,86 @@ def admin_delete_user(user_id):
 @auth_bp.route("/admin/tokens", methods=["GET"])
 @admin_required
 def admin_tokens_page():
-    return render_template("admin/tokens.html", tokens=list(registration_tokens))
+    from datetime import datetime as dt
+
+    with get_db() as db:
+        tokens = (
+            db.query(InviteToken)
+            .filter(InviteToken.used_at.is_(None))
+            .order_by(InviteToken.created_at.desc())
+            .all()
+        )
+    now = dt.now(UTC)
+    return render_template("admin/tokens.html", tokens=tokens, now=now)
+
+
+@auth_bp.route("/admin/tokens/<int:token_id>", methods=["DELETE"])
+@admin_required
+def delete_token(token_id):
+    with get_db() as db:
+        token = db.query(InviteToken).filter(InviteToken.id == token_id).first()
+        if not token:
+            return jsonify({"detail": "Token non trovato"}), 404
+        db.delete(token)
+        log_action(
+            db=db,
+            action="TOKEN_DELETE",
+            entity_type="auth",
+            description="Token eliminato",
+        )
+        db.commit()
+    return jsonify({"message": "Token eliminato"}), 200
+
+
+@auth_bp.route("/admin/tokens/<int:token_id>", methods=["PUT"])
+@admin_required
+def update_token(token_id):
+    data = request.get_json(silent=True) or {}
+    expires_in = data.get("expires_in", "")
+
+    expires_at = None
+    if expires_in == "24h":
+        expires_at = datetime.now(UTC) + timedelta(hours=24)
+    elif expires_in == "7d":
+        expires_at = datetime.now(UTC) + timedelta(days=7)
+    elif expires_in == "30d":
+        expires_at = datetime.now(UTC) + timedelta(days=30)
+    elif expires_in == "never":
+        expires_at = None
+    else:
+        return jsonify({"detail": "Valore expires_in non valido"}), 400
+
+    with get_db() as db:
+        token = db.query(InviteToken).filter(InviteToken.id == token_id).first()
+        if not token:
+            return jsonify({"detail": "Token non trovato"}), 404
+        old_expires = token.expires_at
+        token.expires_at = expires_at
+        log_action(
+            db=db,
+            action="TOKEN_UPDATE",
+            entity_type="auth",
+            entity_id=token.id,
+            field="expires_at",
+            old_value=old_expires.isoformat() if old_expires else "never",
+            new_value=expires_at.isoformat() if expires_at else "never",
+            description="Scadenza token modificata",
+        )
+        db.commit()
+    return jsonify({"message": "Scadenza aggiornata"}), 200
+
+
+@auth_bp.route("/register/token/validate", methods=["GET"])
+def validate_registration_token():
+    token_val = request.args.get("token", "")
+    if not token_val:
+        return jsonify({"valid": False}), 200
+
+    with get_db() as db:
+        t = db.query(InviteToken).filter(
+            InviteToken.token == token_val,
+            InviteToken.used_at.is_(None),
+        ).first()
+        if t and (t.expires_at is None or t.expires_at > datetime.now(UTC)):
+            return jsonify({"valid": True})
+    return jsonify({"valid": False})
