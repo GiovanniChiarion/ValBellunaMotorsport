@@ -40,6 +40,49 @@
   automaticamente. Al primo accesso, il tema segue le
   impostazioni del tuo sistema operativo.
 
+= 2.6 IMPERSONAZIONE RUOLI =
+
+  Il SuperAdmin puo' testare l'applicazione con i permessi
+  di un admin o di un membro normale SENZA fare logout.
+
+== 2.6.1 ATTIVARE L'IMPERSONAZIONE ==
+
+  - Nella barra in alto, accanto al badge del ruolo, c'e'
+    un menu a tendina con il tuo ruolo attuale
+  - Cliccalo per vedere le opzioni:
+      * SuperAdmin (ruolo originale — permessi pieni)
+      * Admin (stessi permessi di un amministratore)
+      * Membro (stessi permessi di un utente normale)
+  - Seleziona il ruolo che vuoi impersonare
+
+  [TIP] L'impersonazione e' in sessione: se chiudi il browser
+  o fai logout, torni automaticamente al tuo ruolo originale.
+
+== 2.6.2 COSA CAMBIA ==
+
+  Quando impersoni un ruolo:
+    - Le voci di menu si adattano (es. "Storico" scompare
+      se sei impersonato come Admin o Membro)
+    - I pulsanti di amministrazione spariscono (es. "Nuova
+      gara" non e' visibile come Membro)
+    - Le protezioni backend si comportano come se fossi
+      realmente quel ruolo (es. non puoi accedere allo
+      storico se impersoni Membro)
+
+  [WARNING] L'impersonazione NON modifica il tuo account
+  nel database. Il tuo vero ruolo rimane SuperAdmin. Le
+  persone continuano a non vederti nelle liste pubbliche.
+
+== 2.6.3 TORNARE A SUPERADMIN ==
+
+  - Apri di nuovo il menu a tendina accanto al badge
+  - Seleziona "SuperAdmin"
+  - Oppure fai logout e login di nuovo
+
+  [TIP] Un modo rapido per tornare SuperAdmin e' anche
+  ricaricare il menu e cliccare l'opzione SuperAdmin.
+  Il badge tornera' a mostrare il colore viola.
+
 = 3. COMPORTAMENTO INVISIBILE =
 
   Il SuperAdmin non compare in nessuna delle seguenti viste:

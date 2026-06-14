@@ -54,7 +54,7 @@ DEBUG=true
 
 | Prefix | File | Does |
 |--------|------|------|
-| `/auth` | `blueprints/auth.py` | Login, logout, register, settings, change-password/email, `GET /me` (current user), admin change-credentials, token gen (`POST` with `expires_value`+`expires_unit`), token manage (`GET` list, `DELETE`, `PUT` expiry), token validate (`GET`), admin delete user |
+| `/auth` | `blueprints/auth.py` | Login, logout, register, settings, change-password/email, `GET /me` (current user), admin change-credentials, token gen (`POST` with `expires_value`+`expires_unit`), token manage (`GET` list, `DELETE`, `PUT` expiry), token validate (`GET`), admin delete user, impersonate (`POST`, superadmin-only) |
 | `/races` | `blueprints/races.py` | Calendar (year filter), detail, CRUD, admin dashboard/members/types, export (superadmin), import (superadmin) |
 | `/participation` | `blueprints/participation.py` | Set status, update note, toggle macchina, admin override |
 | `/reports` | `blueprints/reports.py` | Aggregate stats (admin-only, `ruolo != "superadmin"` filter) |
@@ -65,7 +65,7 @@ DEBUG=true
 - App factory: `app/__init__.py:create_app()` — called by `run.py` and tests with `test_config`
 - Vanilla SQLAlchemy (no Flask-SQLAlchemy): `Base`, `engine`, `SessionLocal`, `get_db()` context manager in `app/database.py`
 - **DELETE journal** (not WAL) — PythonAnywhere NFS compat
-- `before_request` (×2): `initialize_db` — auto `Base.metadata.create_all` + default admin/superadmin on first request; `log_page_view` — logs every GET (except `/health`) to audit log, gated by `log_page_views` config
+- `before_request` (×3): `initialize_db` — auto `Base.metadata.create_all` + default admin/superadmin on first request; `log_page_view` — logs every GET (except `/health`) to audit log, gated by `log_page_views` config; `ensure_effective_role` — sets `g.effective_role = None` fallback
 - APScheduler (`app/tasks.py`) defines `start_scheduler()`/`stop_scheduler()` — **never called** in app factory, not wired
 - `/` → unauthenticated → login, authenticated → calendar. `/health` → JSON status.
 - `pydantic-settings` (`app/config.py`) reads `.env` — `get_settings()` is `@lru_cache`d
@@ -73,6 +73,7 @@ DEBUG=true
 - Dark mode: class-based on `<html>`, stored in `localStorage('theme')`, respects `prefers-color-scheme`
 - `app/features.py`: feature flags system (`calendar_filters` in beta for superadmin)
 - `app/audit.py`: `log_action()` helper — auto-captures IP, UA, and current user from Flask `g`/`request`
+- `g.effective_role`: set in `user_lookup_callback` and `optional_auth` from `session.get("impersonated_role") or user.ruolo`; used by decorators and templates for permission checks instead of `g.current_user.ruolo`
 
 ## Auth & roles
 
@@ -83,6 +84,7 @@ DEBUG=true
 - Defaults: `admin@valbellunamotorsport.it` / `admin123`, `superadmin@valbellunamotorsport.it` / `superadmin123`
 - SuperAdmin hidden from member/participant/report/dashboard queries (`User.ruolo != "superadmin"`)
 - Registration tokens DB-backed (`InviteToken` model in `app/models.py`) — persistent across restarts, with configurable expiration
+- Role impersonation: `POST /auth/impersonate` (superadmin-only) stores `session["impersonated_role"]`; decorators use `g.effective_role` (set from session override or `user.ruolo`) instead of `g.current_user.ruolo` — allows testing as Admin/Membro without logout
 
 ## DB quirks
 
@@ -129,6 +131,7 @@ Reads `TEST Calendario 2026 Valbelluna Motorsport.xlsx`. On PythonAnywhere file 
 - `app` fixture: function-scoped `create_all`/`drop_all`; `db` fixture: `get_db()` session yield
 - Token auth: `create_access_token(identity=str(user.id))` → `Authorization: Bearer` header
 - Fixtures: `app`, `client`, `db`, `admin_user`, `superadmin_user`, `normal_user`, `*_token`, `auth_headers`
+- `tests/test_impersonation.py`: 10 tests for role impersonation (superadmin → admin/membro, revert, access control)
 
 ## PythonAnywhere
 
