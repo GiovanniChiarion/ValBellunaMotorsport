@@ -12,6 +12,11 @@ function filterState() {
         filterNome: '',
         filterDa: '',
         filterA: '',
+        dragX: 0,
+        dragY: 0,
+        isDragging: false,
+        startX: 0,
+        startY: 0,
         filterMatches(stato, inizio, fine, nome) {
             if (this.filterStatus === 'future' && stato === 'conclusa') return false;
             if (this.filterStatus === 'concluded' && stato !== 'conclusa') return false;
@@ -25,6 +30,21 @@ function filterState() {
             this.filterNome = '';
             this.filterDa = '';
             this.filterA = '';
+        },
+        startDrag(event) {
+            this.isDragging = true;
+            const e = event.touches ? event.touches[0] : event;
+            this.startX = e.clientX - this.dragX;
+            this.startY = e.clientY - this.dragY;
+        },
+        onDrag(event) {
+            if (!this.isDragging) return;
+            const e = event.touches ? event.touches[0] : event;
+            this.dragX = e.clientX - this.startX;
+            this.dragY = e.clientY - this.startY;
+        },
+        stopDrag() {
+            this.isDragging = false;
         },
     };
 }
@@ -122,6 +142,26 @@ function filterState() {
             </template>
         </div>
         {% endif %}
+    </div>
+    {% endif %}
+
+    {% if filters_enabled %}
+    <div class="flex flex-wrap gap-1.5 mb-4">
+        <button @click="filterStatus = 'future'"
+                :class="filterStatus === 'future' ? 'bg-emerald-600 text-white shadow-sm ring-2 ring-emerald-300 dark:ring-emerald-700' : 'bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700'"
+                class="min-h-[44px] px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-150">
+            In corso / Future
+        </button>
+        <button @click="filterStatus = 'concluded'"
+                :class="filterStatus === 'concluded' ? 'bg-gray-600 text-white shadow-sm ring-2 ring-gray-300 dark:ring-gray-700' : 'bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700'"
+                class="min-h-[44px] px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-150">
+            Concluse
+        </button>
+        <button @click="filterStatus = 'all'"
+                :class="filterStatus === 'all' ? 'bg-blue-600 text-white shadow-sm ring-2 ring-blue-300 dark:ring-blue-700' : 'bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700'"
+                class="min-h-[44px] px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-150">
+            Tutte
+        </button>
     </div>
     {% endif %}
 
@@ -323,32 +363,25 @@ function filterState() {
     </div>
 
     {% if filters_enabled %}
-    <div x-show="open" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-2 sm:p-4" @click.self="open = false" x-cloak>
-        <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 w-full max-w-md shadow-xl border border-gray-200 dark:border-slate-700 max-h-[90vh] overflow-y-auto" @click.stop>
-            <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">Filtra calendario</h3>
+    <div x-show="open"
+         :style="'position:fixed;z-index:50;transform:translate(' + dragX + 'px,' + dragY + 'px);top:2rem;left:50%;margin-left:-256px;width:512px;max-width:calc(100vw - 2rem)'"
+         x-cloak>
+        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-gray-200 dark:border-slate-700 overflow-hidden">
+            <div class="flex items-center justify-between px-5 py-3 border-b border-gray-100 dark:border-slate-700 cursor-move select-none"
+                 @mousedown.prevent="startDrag"
+                 @mousemove.prevent="onDrag"
+                 @mouseup.prevent="stopDrag"
+                 @mouseleave.prevent="stopDrag"
+                 @touchstart.prevent="startDrag"
+                 @touchmove.prevent="onDrag"
+                 @touchend.prevent="stopDrag">
+                <h3 class="text-base font-bold text-gray-900 dark:text-white">Filtri avanzati</h3>
+                <button @click="open = false" class="text-gray-400 hover:text-gray-600 dark:hover:text-slate-200 transition-colors p-1" title="Chiudi">
+                    <svg class="size-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6l-12 12"/></svg>
+                </button>
+            </div>
 
-            <div class="space-y-5">
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2">Stato</label>
-                    <div class="flex gap-1.5">
-                        <button @click="filterStatus = 'future'"
-                                :class="filterStatus === 'future' ? 'bg-emerald-600 text-white shadow-sm' : 'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300 hover:bg-gray-200 dark:hover:bg-slate-600'"
-                                class="flex-1 min-h-[44px] px-3 py-2 rounded-xl text-sm font-semibold transition-all duration-150">
-                            In corso / Future
-                        </button>
-                        <button @click="filterStatus = 'concluded'"
-                                :class="filterStatus === 'concluded' ? 'bg-gray-600 text-white shadow-sm' : 'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300 hover:bg-gray-200 dark:hover:bg-slate-600'"
-                                class="flex-1 min-h-[44px] px-3 py-2 rounded-xl text-sm font-semibold transition-all duration-150">
-                            Concluse
-                        </button>
-                        <button @click="filterStatus = 'all'"
-                                :class="filterStatus === 'all' ? 'bg-blue-600 text-white shadow-sm' : 'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300 hover:bg-gray-200 dark:hover:bg-slate-600'"
-                                class="flex-1 min-h-[44px] px-3 py-2 rounded-xl text-sm font-semibold transition-all duration-150">
-                            Tutte
-                        </button>
-                    </div>
-                </div>
-
+            <div class="p-5 space-y-4">
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-1.5">Nome gara</label>
                     <input type="text" x-model="filterNome" placeholder="Cerca per nome..."
@@ -367,17 +400,13 @@ function filterState() {
                                class="w-full min-h-[44px] px-4 py-2.5 bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-xl text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500">
                     </div>
                 </div>
-            </div>
 
-            <div class="flex gap-2 mt-6 pt-4 border-t border-gray-100 dark:border-slate-700">
-                <button @click="open = false"
-                        class="flex-1 min-h-[44px] px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-semibold shadow-sm transition-all duration-150">
-                    Applica
-                </button>
-                <button @click="resetFilters()"
-                        class="flex-1 min-h-[44px] px-4 py-2.5 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-700 dark:text-slate-300 rounded-xl text-sm font-semibold transition-all duration-150">
-                    Reset
-                </button>
+                <div class="pt-2">
+                    <button @click="resetFilters()"
+                            class="w-full min-h-[44px] px-4 py-2.5 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-700 dark:text-slate-300 rounded-xl text-sm font-semibold transition-all duration-150">
+                        Reset filtri
+                    </button>
+                </div>
             </div>
         </div>
     </div>
