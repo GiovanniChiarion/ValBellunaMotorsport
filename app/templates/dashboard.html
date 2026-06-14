@@ -17,6 +17,11 @@ function filterState() {
         isDragging: false,
         startX: 0,
         startY: 0,
+        init() {
+            this.$watch('open', val => {
+                if (val) { this.dragX = 0; this.dragY = 0; }
+            });
+        },
         filterMatches(stato, inizio, fine, nome) {
             if (this.filterStatus === 'future' && stato === 'conclusa') return false;
             if (this.filterStatus === 'concluded' && stato !== 'conclusa') return false;
