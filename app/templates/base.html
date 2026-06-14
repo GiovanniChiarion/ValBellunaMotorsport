@@ -72,10 +72,12 @@
                                 {{ icon_chart_bar(class="size-4 inline -mt-0.5 mr-1") }}
                                 Report
                             </a>
+                            {% if current_user.ruolo == 'superadmin' %}
                             <a href="/history" class="px-3 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-slate-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors duration-150">
                                 {{ icon_clock(class="size-4 inline -mt-0.5 mr-1") }}
                                 Storico
                             </a>
+                            {% endif %}
                             {% endif %}
                         </div>
                         {% endif %}
@@ -134,9 +136,11 @@
                     <a href="/reports" class="block px-3 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700">
                         {{ icon_chart_bar(class="size-4 inline mr-2") }}Report
                     </a>
+                    {% if current_user.ruolo == 'superadmin' %}
                     <a href="/history" class="block px-3 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700">
                         {{ icon_clock(class="size-4 inline mr-2") }}Storico
                     </a>
+                    {% endif %}
                     {% endif %}
                     <hr class="border-gray-200 dark:border-slate-700 my-2">
                     <div class="flex items-center space-x-2 px-3 py-2">

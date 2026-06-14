@@ -161,6 +161,8 @@ def edit_race(race_id):
             old = getattr(race, field)
             if old != value:
                 setattr(race, field, value)
+                old_str = str(old) if old is not None else None
+                new_str = str(value) if value is not None else None
                 log_action(
                     db=db,
                     action="UPDATE",
@@ -168,9 +170,9 @@ def edit_race(race_id):
                     entity_id=race.id,
                     race_id=race.id,
                     field=field,
-                    old_value=str(old) if old is not None else None,
-                    new_value=str(value) if value is not None else None,
-                    description=f"{g.current_user.nome} ha modificato '{field}' della gara '{race.descrizione}'",
+                    old_value=old_str,
+                    new_value=new_str,
+                    description=f"Modificato {field}: {old_str or '—'} → {new_str or '—'} su '{race.descrizione}'",
                 )
 
         db.commit()
@@ -205,7 +207,7 @@ def create_race():
             race_id=race_id,
             field="descrizione",
             new_value=race_desc,
-            description=f"{g.current_user.nome} ha creato la gara '{race_desc}'",
+            description=f"Creata gara '{race_desc}'",
         )
         db.commit()
 
@@ -228,7 +230,7 @@ def delete_race(race_id):
             entity_type="race",
             entity_id=race_id,
             race_id=race_id,
-            description=f"{g.current_user.nome} ha eliminato la gara '{desc}'",
+            description=f"Eliminata gara '{desc}'",
         )
         db.delete(race)
         db.commit()
@@ -317,7 +319,7 @@ def admin_set_role(user_id):
             field="user.ruolo",
             old_value=old,
             new_value=ruolo,
-            description=f"{g.current_user.nome} ha cambiato il ruolo di {user.nome}: {old} → {ruolo}",
+            description=f"Ruolo {user.nome}: {old} → {ruolo}",
         )
         db.commit()
 
@@ -346,7 +348,7 @@ def admin_toggle_user(user_id):
             field="user.attivo",
             old_value=old,
             new_value=new,
-            description=f"{g.current_user.nome} ha {'disattivato' if new_attivo == 0 else 'attivato'} {user.nome}",
+            description=f"{'Disattivato' if new_attivo == 0 else 'Attivato'} {user.nome}",
         )
         db.commit()
 
@@ -387,7 +389,7 @@ def create_race_type():
             action="CREATE",
             entity_type="race_type",
             entity_id=rt.id,
-            description=f"{g.current_user.nome} ha creato il tipo gara '{codice}'",
+            description=f"Creato tipo '{codice}'",
         )
         db.commit()
         db.refresh(rt)
@@ -417,7 +419,7 @@ def delete_race_type(type_id):
             action="DELETE",
             entity_type="race_type",
             entity_id=type_id,
-            description=f"{g.current_user.nome} ha eliminato il tipo gara '{codice}'",
+            description=f"Eliminato tipo '{codice}'",
         )
         db.delete(rt)
         db.commit()
@@ -442,7 +444,7 @@ def export_all_data():
             db=db,
             action="EXPORT",
             entity_type="system",
-            description=f"{g.current_user.nome} ha esportato il backup ({', '.join(sorted(sections))})",
+            description=f"Backup esportato: {', '.join(sorted(sections))}",
         )
         db.commit()
         if "gare" in sections or not include:
@@ -546,7 +548,7 @@ def import_all_data():
             db=db,
             action="IMPORT",
             entity_type="system",
-            description=f"{g.current_user.nome} ha importato un backup",
+            description=f"Backup importato",
         )
         try:
             for rt in data.get("race_types", []):

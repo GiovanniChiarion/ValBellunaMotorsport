@@ -130,7 +130,7 @@ def create_app(test_config=None) -> Flask:
                 db=db,
                 action="VIEW",
                 entity_type=request.path.split("/")[1] if request.path.count("/") > 0 else "page",
-                description=f"{user.nome} ha visitato {request.path}",
+                description=f"VIEW: {user.nome} → {request.path}",
             )
             db.commit()
 

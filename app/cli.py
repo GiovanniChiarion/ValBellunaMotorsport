@@ -5,7 +5,7 @@ import sys
 from app.audit import log_action
 from app.auth import hash_password
 from app.database import Base, SessionLocal, engine
-from app.models import User
+from app.models import AuditLog, User
 
 
 def cmd_list_users(args):
@@ -180,6 +180,16 @@ def cmd_delete_user(args):
         db.close()
 
 
+def cmd_clear_logs(args):
+    db = SessionLocal()
+    try:
+        count = db.query(AuditLog).delete()
+        db.commit()
+        print(f"Log eliminati: {count}")
+    finally:
+        db.close()
+
+
 def main():
     Base.metadata.create_all(bind=engine)
 
@@ -211,6 +221,8 @@ def main():
     p_del.add_argument("email", help="Email dell'utente")
     p_del.add_argument("-y", "--yes", action="store_true", help="Salta conferma")
 
+    sub.add_parser("clear-logs", help="Cancella tutti i log dello storico")
+
     args = parser.parse_args()
 
     commands = {
@@ -220,6 +232,7 @@ def main():
         "make-admin": cmd_make_admin,
         "create-superadmin": cmd_create_superadmin,
         "delete-user": cmd_delete_user,
+        "clear-logs": cmd_clear_logs,
     }
 
     commands[args.command](args)

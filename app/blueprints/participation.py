@@ -171,6 +171,16 @@ def admin_set_participation(user_id, race_id):
 
 
 def _log(db, user_id, race_id, field, old_value, new_value, description=None):
+    if description is None:
+        race = db.query(Race).filter(Race.id == race_id).first()
+        race_name = f" su {race.descrizione}" if race else ""
+        if field == "participation.status":
+            description = f"Status: {old_value} → {new_value}{race_name}"
+        elif field == "participation.con_macchina":
+            desc = "Sì" if new_value == "1" else "No"
+            description = f"Macchina: {desc}{race_name}"
+        else:
+            description = f"Nota aggiornata{race_name}"
     log_action(
         db=db,
         action="UPDATE",

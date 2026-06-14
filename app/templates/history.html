@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block title %}Storico Modifiche — ValBelluna Motorsport{% endblock %}
 {% block content %}
-{% from '_icons.html' import icon_clock, icon_filter, icon_x %}
+{% from '_icons.html' import icon_clock, icon_filter, icon_x, icon_chevron_down %}
 
 <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
     <div class="flex items-center space-x-3">
@@ -11,72 +11,79 @@
         <h1 class="text-2xl font-extrabold tracking-tight text-gray-900 dark:text-white">Storico Modifiche</h1>
         <span class="text-sm text-gray-400 dark:text-slate-500 font-medium">({{ total }} eventi)</span>
     </div>
-    {% if current_user.ruolo == 'superadmin' %}
     <a href="/history/export?{% for k,v in filters.items() %}{% if v %}{{ k }}={{ v }}&{% endif %}{% endfor %}"
        class="inline-flex items-center px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-sm font-medium shadow-sm transition-all duration-150">
         <svg class="size-4 mr-1.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
         Esporta Storico
     </a>
-    {% endif %}
 </div>
 
-<div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-200 dark:border-slate-700 overflow-hidden mb-6">
-    <form method="GET" action="/history" class="p-4 sm:p-6">
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-            <div>
-                <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400 mb-1.5">Da data</label>
-                <input type="date" name="date_from" value="{{ filters.date_from or '' }}"
-                       class="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500/40 focus:border-orange-500">
+<div x-data="{ filtersOpen: {{ 'true' if filters.action or filters.user_id or filters.date_from or filters.date_to or filters.ip or filters.race else 'false' }} }" class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-200 dark:border-slate-700 overflow-hidden mb-6">
+    <button @click="filtersOpen = !filtersOpen" class="w-full flex items-center justify-between px-4 sm:px-6 py-3 text-left hover:bg-gray-50 dark:hover:bg-slate-700/30 transition-colors">
+        <span class="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-slate-300">
+            {{ icon_filter(class="size-4") }}
+            Filtri
+        </span>
+        <svg :class="{ 'rotate-180': filtersOpen }" class="size-4 transition-transform duration-200" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19.5 8.25l-7.5 7.5-7.5-7.5"/></svg>
+    </button>
+    <div x-show="filtersOpen" x-collapse.duration.200ms>
+        <form method="GET" action="/history" class="p-4 sm:p-6 border-t border-gray-200 dark:border-slate-700">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400 mb-1.5">Da data</label>
+                    <input type="date" name="date_from" value="{{ filters.date_from or '' }}"
+                           class="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500/40 focus:border-orange-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400 mb-1.5">A data</label>
+                    <input type="date" name="date_to" value="{{ filters.date_to or '' }}"
+                           class="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500/40 focus:border-orange-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400 mb-1.5">Utente</label>
+                    <select name="user_id"
+                            class="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500/40 focus:border-orange-500">
+                        <option value="">Tutti</option>
+                        {% for u in users %}
+                        <option value="{{ u.id }}" {% if filters.user_id|string == u.id|string %}selected{% endif %}>{{ u.nome }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400 mb-1.5">Azione</label>
+                    <select name="action"
+                            class="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500/40 focus:border-orange-500">
+                        <option value="">Tutte</option>
+                        {% for a in action_types %}
+                        <option value="{{ a }}" {% if filters.action == a %}selected{% endif %}>{{ a }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400 mb-1.5">IP</label>
+                    <input type="text" name="ip" value="{{ filters.ip or '' }}" placeholder="es. 192.168.1.1"
+                           class="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500/40 focus:border-orange-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400 mb-1.5">Gara</label>
+                    <input type="text" name="race" value="{{ filters.race or '' }}" placeholder="Cerca gara..."
+                           class="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500/40 focus:border-orange-500">
+                </div>
             </div>
-            <div>
-                <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400 mb-1.5">A data</label>
-                <input type="date" name="date_to" value="{{ filters.date_to or '' }}"
-                       class="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500/40 focus:border-orange-500">
+            <div class="flex items-center gap-3 mt-4">
+                <button type="submit"
+                        class="inline-flex items-center px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-xl text-sm font-medium shadow-sm transition-all duration-150">
+                    <svg class="size-4 mr-1.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4.5h18l-7.5 9v5.25l-3 1.5V13.5L3 4.5z"/></svg>
+                    Applica Filtri
+                </button>
+                <a href="/history"
+                   class="inline-flex items-center px-4 py-2 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-700 dark:text-slate-300 rounded-xl text-sm font-medium transition-all duration-150">
+                    <svg class="size-4 mr-1.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18L18 6M6 6l12 12"/></svg>
+                    Resetta
+                </a>
             </div>
-            <div>
-                <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400 mb-1.5">Utente</label>
-                <select name="user_id"
-                        class="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500/40 focus:border-orange-500">
-                    <option value="">Tutti</option>
-                    {% for u in users %}
-                    <option value="{{ u.id }}" {% if filters.user_id|string == u.id|string %}selected{% endif %}>{{ u.nome }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div>
-                <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400 mb-1.5">Azione</label>
-                <select name="action"
-                        class="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500/40 focus:border-orange-500">
-                    <option value="">Tutte</option>
-                    {% for a in action_types %}
-                    <option value="{{ a }}" {% if filters.action == a %}selected{% endif %}>{{ a }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div>
-                <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400 mb-1.5">IP</label>
-                <input type="text" name="ip" value="{{ filters.ip or '' }}" placeholder="es. 192.168.1.1"
-                       class="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500/40 focus:border-orange-500">
-            </div>
-            <div>
-                <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400 mb-1.5">Gara</label>
-                <input type="text" name="race" value="{{ filters.race or '' }}" placeholder="Cerca gara..."
-                       class="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500/40 focus:border-orange-500">
-            </div>
-        </div>
-        <div class="flex items-center gap-3 mt-4">
-            <button type="submit"
-                    class="inline-flex items-center px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-xl text-sm font-medium shadow-sm transition-all duration-150">
-                <svg class="size-4 mr-1.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4.5h18l-7.5 9v5.25l-3 1.5V13.5L3 4.5z"/></svg>
-                Applica Filtri
-            </button>
-            <a href="/history"
-               class="inline-flex items-center px-4 py-2 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-700 dark:text-slate-300 rounded-xl text-sm font-medium transition-all duration-150">
-                <svg class="size-4 mr-1.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18L18 6M6 6l12 12"/></svg>
-                Resetta
-            </a>
-        </div>
-    </form>
+        </form>
+    </div>
 </div>
 
 <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-200 dark:border-slate-700 overflow-hidden">
@@ -84,18 +91,22 @@
         <table class="min-w-full divide-y divide-gray-200 dark:divide-slate-700">
             <thead class="bg-gray-50 dark:bg-slate-800/50">
                 <tr>
+                    <th class="px-4 py-3.5 w-8"></th>
                     <th class="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400">Data</th>
                     <th class="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400">Utente</th>
                     <th class="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400">Azione</th>
                     <th class="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400">Descrizione</th>
                     <th class="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400">Gara</th>
-                    <th class="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400">Dettaglio</th>
-                    <th class="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400">IP</th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-gray-100 dark:divide-slate-700/50">
+            <tbody x-data="{ open: {} }" class="divide-y divide-gray-100 dark:divide-slate-700/50">
                 {% for log in logs %}
-                <tr class="hover:bg-gray-50 dark:hover:bg-slate-700/30 transition-colors duration-150 text-sm">
+                <tr @click="open[{{ log.id }}] = !open[{{ log.id }}]"
+                    class="cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-700/30 transition-colors duration-150 text-sm"
+                    :class="open[{{ log.id }}] && 'bg-orange-50/50 dark:bg-orange-900/10'">
+                    <td class="px-4 py-3.5 w-8 text-gray-400 dark:text-slate-500">
+                        <svg :class="{ 'rotate-180': open[{{ log.id }}] }" class="size-3 transition-transform duration-200" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19.5 8.25l-7.5 7.5-7.5-7.5"/></svg>
+                    </td>
                     <td class="px-4 py-3.5 text-gray-500 dark:text-slate-400 whitespace-nowrap">{{ log.timestamp.strftime('%d/%m/%Y %H:%M') }}</td>
                     <td class="px-4 py-3.5">
                         <div class="flex items-center space-x-2">
@@ -118,37 +129,38 @@
                         <span class="inline-flex px-2 py-0.5 rounded-lg text-xs font-medium bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300">—</span>
                         {% endif %}
                     </td>
-                    <td class="px-4 py-3.5 text-gray-700 dark:text-slate-300 max-w-[250px] truncate" title="{{ log.description or '' }}">
+                    <td class="px-4 py-3.5 text-gray-700 dark:text-slate-300 max-w-[300px] truncate" title="{{ log.description or '' }}">
                         {{ log.description or '—' }}
                     </td>
-                    <td class="px-4 py-3.5 text-gray-600 dark:text-slate-400 max-w-[150px] truncate" title="{{ log.race.descrizione if log.race else '' }}">
+                    <td class="px-4 py-3.5 text-gray-600 dark:text-slate-400 max-w-[140px] truncate" @click.stop title="{{ log.race.descrizione if log.race else '' }}">
                         {% if log.race_id %}
                         <a href="/races/{{ log.race_id }}" class="text-orange-600 dark:text-orange-400 hover:underline">{{ log.race.descrizione if log.race else 'Gara #' ~ log.race_id }}</a>
                         {% else %}
                         —
                         {% endif %}
                     </td>
-                    <td class="px-4 py-3.5 text-gray-500 dark:text-slate-400 max-w-[200px] truncate">
-                        {% if log.field %}
-                        <span class="text-xs font-medium text-gray-400 dark:text-slate-500">{{ log.field }}</span>
-                        {% if log.old_value or log.new_value %}
-                        <br><span class="text-xs">{{ log.old_value|truncate(30) or '—' }} → {{ log.new_value|truncate(30) or '—' }}</span>
-                        {% endif %}
-                        {% else %}
-                        —
-                        {% endif %}
-                    </td>
-                    <td class="px-4 py-3.5 text-gray-500 dark:text-slate-400 whitespace-nowrap text-xs font-mono" title="User-Agent: {{ log.user_agent or '—' }}">
-                        {% if log.ip_address %}
-                        {{ log.ip_address }}
-                        {% else %}
-                        —
-                        {% endif %}
+                </tr>
+                <tr x-show="open[{{ log.id }}]" x-collapse.duration.200ms>
+                    <td colspan="6" class="bg-gray-50 dark:bg-slate-700/20 px-6 py-3" @click.stop>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-x-6 gap-y-1.5 text-xs">
+                            <div>
+                                <span class="font-semibold text-gray-500 dark:text-slate-400">Campo:</span>
+                                <span class="text-gray-700 dark:text-slate-300">{{ log.field or '—' }}</span>
+                            </div>
+                            <div>
+                                <span class="font-semibold text-gray-500 dark:text-slate-400">IP:</span>
+                                <span class="text-gray-700 dark:text-slate-300 font-mono">{{ log.ip_address or '—' }}</span>
+                            </div>
+                            <div>
+                                <span class="font-semibold text-gray-500 dark:text-slate-400">User-Agent:</span>
+                                <span class="text-gray-700 dark:text-slate-300 block truncate" title="{{ log.user_agent or '' }}">{{ log.user_agent or '—' }}</span>
+                            </div>
+                        </div>
                     </td>
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="7" class="px-4 py-16 text-center">
+                    <td colspan="6" class="px-4 py-16 text-center">
                         <div class="inline-flex items-center justify-center size-12 bg-gray-100 dark:bg-slate-700 rounded-xl mb-3">
                             {{ icon_clock(class="size-6 text-gray-400") }}
                         </div>

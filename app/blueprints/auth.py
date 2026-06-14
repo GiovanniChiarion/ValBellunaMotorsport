@@ -45,7 +45,7 @@ def login():
                 db=db,
                 action="LOGIN_FAILED",
                 entity_type="auth",
-                description=f"Tentativo di accesso fallito per {email}",
+                description=f"Login fallito: {email}",
             )
             db.commit()
         return jsonify({"detail": "Email o password non validi"}), 401
@@ -58,7 +58,7 @@ def login():
             entity_type="auth",
             user_id=user.id,
             actor_name=user.nome,
-            description=f"{user.nome} ha effettuato l'accesso",
+            description=f"Login: {user.nome}",
         )
         db.commit()
     response = jsonify(
@@ -87,7 +87,7 @@ def logout():
             entity_type="auth",
             user_id=user.id if user else None,
             actor_name=user.nome if user else None,
-            description=f"{user.nome} ha effettuato il logout" if user else "Logout",
+            description=f"Logout: {user.nome}" if user else "Logout",
         )
         db.commit()
     response = jsonify({"message": "Logout effettuato"})
@@ -140,7 +140,7 @@ def register():
             entity_id=user.id,
             user_id=user.id,
             actor_name=user.nome,
-            description=f"{user.nome} si è registrato",
+            description=f"Registrato: {user.nome}",
         )
         db.commit()
         db.refresh(user)
@@ -175,7 +175,7 @@ def generate_registration_token():
             db=db,
             action="TOKEN_GENERATE",
             entity_type="auth",
-            description=f"{g.current_user.nome} ha generato un token di registrazione",
+            description=f"Token generato da {g.current_user.nome}",
         )
         db.commit()
     return jsonify({"token": token})
@@ -234,7 +234,7 @@ def change_own_password():
             action="PASSWORD_CHANGE",
             entity_type="user",
             entity_id=user.id,
-            description=f"{user.nome} ha cambiato la propria password",
+            description=f"Password cambiata: {user.nome}",
         )
         db.commit()
 
@@ -274,7 +274,7 @@ def change_own_email():
             field="user.email",
             old_value=old_email,
             new_value=new_email,
-            description=f"{user.nome} ha cambiato la propria email: {old_email} → {new_email}",
+            description=f"Email cambiata: {user.nome}: {old_email} → {new_email}",
         )
         db.commit()
 
@@ -304,7 +304,7 @@ def admin_change_user_password(user_id):
             action="PASSWORD_CHANGE",
             entity_type="user",
             entity_id=target.id,
-            description=f"{g.current_user.nome} ha cambiato la password di {target.nome}",
+            description=f"Password cambiata da {g.current_user.nome} per {target.nome}",
         )
         db.commit()
 
@@ -340,7 +340,7 @@ def admin_change_user_email(user_id):
             field="user.email",
             old_value=old_email,
             new_value=new_email,
-            description=f"{g.current_user.nome} ha cambiato l'email di {target.nome}: {old_email} → {new_email}",
+            description=f"Email cambiata da {g.current_user.nome} per {target.nome}: {old_email} → {new_email}",
         )
         db.commit()
 
@@ -368,7 +368,7 @@ def admin_delete_user(user_id):
             entity_id=user.id,
             field="user.deleted",
             new_value=f"{nome} ({email})",
-            description=f"{g.current_user.nome} ha eliminato {nome} ({email})",
+            description=f"Eliminato: {nome} ({email})",
         )
         db.delete(user)
         db.commit()

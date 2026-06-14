@@ -1,0 +1,26 @@
+{
+  "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python3",
+  "python.terminal.activateEnvironment": true,
+  "python.languageServer": "Pylance",
+  "python.analysis.typeCheckingMode": "basic",
+  "python.analysis.include": ["app"],
+  "python.analysis.exclude": [".venv", "alembic"],
+  "python.analysis.autoSearchPaths": true,
+  "python.analysis.extraPaths": ["${workspaceFolder}/app"],
+  "[python]": {
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": "explicit"
+    },
+    "editor.defaultFormatter": "charliermarsh.ruff"
+  },
+  "ruff.enable": true,
+  "ruff.lint.run": "onType",
+  "ruff.format.args": ["--line-length", "88"],
+  "files.exclude": {
+    "**/__pycache__": true,
+    "**/*.pyc": true,
+    ".ruff_cache": true,
+    ".venv": true
+  }
+}

@@ -44,7 +44,7 @@ def _build_query(*, db, action=None, user_id=None, date_from=None, date_to=None,
 
 
 @history_bp.route("")
-@admin_required
+@superadmin_required
 def history_view():
     page = request.args.get("page", 1, type=int)
     per_page = request.args.get("per_page", ITEMS_PER_PAGE, type=int)

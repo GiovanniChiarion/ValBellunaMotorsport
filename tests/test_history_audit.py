@@ -19,7 +19,7 @@ def _log_entry(db, action="LOGIN", user_id=None, ip="10.0.0.1"):
     db.commit()
 
 
-def test_history_filter_by_action(client, app, admin_token, normal_user):
+def test_history_filter_by_action(client, app, superadmin_token, normal_user):
     with get_db() as db:
         _log_entry(db, action="LOGIN", user_id=normal_user.id)
         _log_entry(db, action="LOGOUT", user_id=normal_user.id)
@@ -27,7 +27,7 @@ def test_history_filter_by_action(client, app, admin_token, normal_user):
 
     resp = client.get(
         "/history?action=LOGOUT",
-        headers={"Authorization": f"Bearer {admin_token}"},
+        headers={"Authorization": f"Bearer {superadmin_token}"},
     )
     assert resp.status_code == 200
 
@@ -36,19 +36,19 @@ def test_history_filter_by_action(client, app, admin_token, normal_user):
         assert count == 1
 
 
-def test_history_filter_by_user(client, app, admin_token, admin_user, normal_user):
+def test_history_filter_by_user(client, app, superadmin_token, admin_user, normal_user):
     with get_db() as db:
         _log_entry(db, user_id=admin_user.id)
         _log_entry(db, user_id=normal_user.id)
 
     resp = client.get(
         f"/history?user_id={normal_user.id}",
-        headers={"Authorization": f"Bearer {admin_token}"},
+        headers={"Authorization": f"Bearer {superadmin_token}"},
     )
     assert resp.status_code == 200
 
 
-def test_history_filter_by_date(client, app, admin_token, normal_user):
+def test_history_filter_by_date(client, app, superadmin_token, normal_user):
     with get_db() as db:
         _log_entry(db, action="LOGIN", user_id=normal_user.id)
 
@@ -59,12 +59,12 @@ def test_history_filter_by_date(client, app, admin_token, normal_user):
 
     resp = client.get(
         f"/history?date_from={today}&date_to={tomorrow}",
-        headers={"Authorization": f"Bearer {admin_token}"},
+        headers={"Authorization": f"Bearer {superadmin_token}"},
     )
     assert resp.status_code == 200
 
 
-def test_history_filter_by_ip(client, app, admin_token, normal_user):
+def test_history_filter_by_ip(client, app, superadmin_token, normal_user):
     with get_db() as db:
         before = db.query(AuditLog).filter(AuditLog.ip_address.like("%192.168.1.42%")).count()
         _log_entry(db, ip="192.168.1.42", user_id=normal_user.id)
@@ -73,14 +73,14 @@ def test_history_filter_by_ip(client, app, admin_token, normal_user):
     assert after == before + 1
 
 
-def test_history_pagination(client, app, admin_token, normal_user):
+def test_history_pagination(client, app, superadmin_token, normal_user):
     with get_db() as db:
         for i in range(5):
             _log_entry(db, action="LOGIN", user_id=normal_user.id)
 
     resp = client.get(
         "/history?per_page=2&page=1",
-        headers={"Authorization": f"Bearer {admin_token}"},
+        headers={"Authorization": f"Bearer {superadmin_token}"},
     )
     assert resp.status_code == 200
 
