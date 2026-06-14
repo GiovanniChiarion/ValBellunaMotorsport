@@ -71,10 +71,10 @@
                     Mai
                     {% endif %}
                 </span>
-                <button onclick="copyTokenUrl('{{ t.token }}')" class="inline-flex items-center px-2.5 py-1.5 bg-white dark:bg-slate-700 border border-gray-200 dark:border-slate-600 hover:bg-gray-100 dark:hover:bg-slate-600 text-gray-600 dark:text-slate-300 rounded-lg text-xs font-medium transition-colors shrink-0" title="Copia link">
-                    {{ icon_clipboard(class="size-3.5 mr-1") }}
-                    Copia
-                </button>
+                <div class="flex items-center gap-1 shrink-0">
+                    <button onclick="copyTokenUrl('{{ t.token }}')" class="px-2 py-1.5 bg-white dark:bg-slate-700 border border-gray-200 dark:border-slate-600 hover:bg-gray-100 dark:hover:bg-slate-600 text-gray-600 dark:text-slate-300 rounded-lg text-xs font-medium transition-colors" title="Copia URL di registrazione">URL</button>
+                    <button onclick="copyTokenRaw('{{ t.token }}')" class="px-2 py-1.5 bg-white dark:bg-slate-700 border border-gray-200 dark:border-slate-600 hover:bg-gray-100 dark:hover:bg-slate-600 text-gray-600 dark:text-slate-300 rounded-lg text-xs font-medium transition-colors" title="Copia solo il token">Token</button>
+                </div>
                 <button onclick="editExpiry({{ t.id }}, '{{ t.expires_at.isoformat() if t.expires_at else '' }}')" class="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-slate-200 transition-colors shrink-0" title="Modifica scadenza">
                     {{ icon_clock(class="size-4") }}
                 </button>
@@ -173,6 +173,11 @@ async function copyTokenUrl(tokenStr) {
     const fullLink = `${window.location.origin}/auth/register?token=${tokenStr}`;
     await navigator.clipboard.writeText(fullLink);
     showToast('Link copiato!', 'success');
+}
+
+async function copyTokenRaw(tokenStr) {
+    await navigator.clipboard.writeText(tokenStr);
+    showToast('Token copiato!', 'success');
 }
 
 function editExpiry(id, currentExpiresIso) {

@@ -54,7 +54,7 @@ DEBUG=true
 
 | Prefix | File | Does |
 |--------|------|------|
-| `/auth` | `blueprints/auth.py` | Login, logout, register, settings, change-password/email, `GET /me` (current user), admin change-credentials, token gen/manage, admin delete user |
+| `/auth` | `blueprints/auth.py` | Login, logout, register, settings, change-password/email, `GET /me` (current user), admin change-credentials, token gen (`POST` with `expires_value`+`expires_unit`), token manage (`GET` list, `DELETE`, `PUT` expiry), token validate (`GET`), admin delete user |
 | `/races` | `blueprints/races.py` | Calendar (year filter), detail, CRUD, admin dashboard/members/types, export (superadmin), import (superadmin) |
 | `/participation` | `blueprints/participation.py` | Set status, update note, toggle macchina, admin override |
 | `/reports` | `blueprints/reports.py` | Aggregate stats (admin-only, `ruolo != "superadmin"` filter) |
@@ -82,7 +82,7 @@ DEBUG=true
 - Login: JSON body + httpOnly cookie
 - Defaults: `admin@valbellunamotorsport.it` / `admin123`, `superadmin@valbellunamotorsport.it` / `superadmin123`
 - SuperAdmin hidden from member/participant/report/dashboard queries (`User.ruolo != "superadmin"`)
-- Registration tokens in-memory `app/blueprints/auth.py:21` — **lost on restart**
+- Registration tokens DB-backed (`InviteToken` model in `app/models.py`) — persistent across restarts, with configurable expiration
 
 ## DB quirks
 

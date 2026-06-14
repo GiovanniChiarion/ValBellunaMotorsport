@@ -164,12 +164,15 @@
 
 == 7.2 COME FUNZIONA ==
 
-    - Il token e' una stringa casuale memorizzata in memoria
-      (non sul database)
-    - I token vengono PERSI al riavvio del server
+    - Il token e' una stringa casuale salvata nel database
+    - I token sono PERSISTENTI al riavvio del server
+    - Ogni token ha una scadenza configurabile (minuti, ore,
+      giorni) o puo' essere senza scadenza
     - Dopo la registrazione, il token viene consumato
       (non riutilizzabile)
     - La pagina dei token mostra tutti quelli ancora attivi
+      con la possibilita' di copiare URL o Token, modificare
+      la scadenza o eliminarli singolarmente
 
 == 7.3 REGISTRAZIONE NUOVO UTENTE ==
 

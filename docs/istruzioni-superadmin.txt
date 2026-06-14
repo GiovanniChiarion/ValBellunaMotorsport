@@ -270,5 +270,7 @@
       personali di tutti gli utenti
     - Non eliminare l'ultimo SuperAdmin: non ci sarebbe piu'
       modo di fare backup/ripristino dall'interfaccia web
-    - I token di registrazione sono in memoria e vengono persi
-      al riavvio del server (dovrai rigenerarli)
+    - I token di registrazione sono persistenti nel database:
+      non vengono persi al riavvio del server
+    - Ogni token ha una scadenza configurabile (minuti, ore,
+      giorni) o puo' essere senza scadenza

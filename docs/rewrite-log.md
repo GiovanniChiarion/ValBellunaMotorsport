@@ -66,11 +66,16 @@ fetch('/races/admin/import', {
 
 **Perché**: I modelli sono identici al progetto FastAPI. Flask-SQLAlchemy richiederebbe di ereditare da `db.Model` invece di `declarative_base()`.
 
-### 7. In-memory registration tokens
+### 7. Registration tokens (DB-backed)
 
-**Decisione**: `registration_tokens: set[str]` in-memory in `blueprints/auth.py` — persi al riavvio
+**Decisione**: Modello `InviteToken` in `app/models.py` con campi: token, created_at, expires_at, used_at, created_by_id, used_by_id.
 
-**Perché**: Identico al comportamento FastAPI. Su PythonAnywhere il riavvio è raro e controllato.
+**Note**: Sostituisce il vecchio `registration_tokens: set[str]` in-memory. I token ora:
+- Sono persistenti (non persi al riavvio)
+- Hanno scadenza configurabile (minuti/ore/giorni o mai)
+- Possono essere eliminati individualmente
+- Hanno scadenza modificabile dopo la creazione
+- Espongono endpoint di validazione (`GET /auth/register/token/validate`)
 
 ### 8. JWT key length (dev vs production)
 
