@@ -1,6 +1,6 @@
 from datetime import UTC, datetime, timedelta
 
-from flask import Blueprint, g, jsonify, render_template, request, session
+from flask import Blueprint, abort, g, jsonify, render_template, request, session
 from flask_jwt_extended import (
     create_access_token,
     set_access_cookies,
@@ -8,7 +8,7 @@ from flask_jwt_extended import (
 )
 
 from app.audit import log_action
-from app.auth import admin_required, hash_password, jwt_required, superadmin_required, verify_password
+from app.auth import admin_required, hash_password, jwt_required, verify_password
 from app.database import get_db
 from app.forms import (
     LoginForm,
@@ -513,8 +513,11 @@ def update_token(token_id):
 
 
 @auth_bp.route("/impersonate", methods=["POST"])
-@superadmin_required
+@jwt_required
 def impersonate():
+    if g.current_user.ruolo != "superadmin":
+        abort(403)
+
     data = request.get_json(silent=True) or {}
     ruolo = data.get("ruolo")
     if ruolo is not None and ruolo not in ("admin", "membro"):
