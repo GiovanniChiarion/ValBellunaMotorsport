@@ -67,10 +67,14 @@ def test_logout_logs_action(client, app, admin_token):
         assert log.ip_address == "10.0.0.3"
 
 
-def test_register_logs_action(client, app, admin_token):
-    from app.blueprints.auth import registration_tokens as tokens
+def test_register_logs_action(client, app, admin_token, admin_user):
+    from app.database import get_db
+    from app.models import InviteToken
 
-    tokens.add("test-reg-token")
+    with get_db() as db:
+        t = InviteToken(token="test-reg-token-db", created_by_id=admin_user.id)
+        db.add(t)
+        db.commit()
 
     resp = client.post(
         "/auth/register",
@@ -78,7 +82,7 @@ def test_register_logs_action(client, app, admin_token):
             "nome": "Nuovo Utente",
             "email": "nuovo@test.com",
             "password": "password123",
-            "token": "test-reg-token",
+            "token": "test-reg-token-db",
         },
         headers={"X-Forwarded-For": "10.0.0.4"},
     )
@@ -94,8 +98,9 @@ def test_register_logs_action(client, app, admin_token):
 
 
 def test_token_generation_logs_action(client, admin_token):
-    resp = client.get(
+    resp = client.post(
         "/auth/register/token",
+        json={"expires_in": "7d"},
         headers={
             "Authorization": f"Bearer {admin_token}",
             "X-Forwarded-For": "10.0.0.5",

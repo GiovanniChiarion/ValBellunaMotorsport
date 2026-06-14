@@ -1,15 +1,10 @@
 {% extends "base.html" %}
 {% block title %}Registrazione — ValBelluna Motorsport{% endblock %}
-{% block extra_head %}
-{% if not token %}
-<meta http-equiv="refresh" content="3;url=/auth/login">
-{% endif %}
-{% endblock %}
 {% block content %}
 {% from '_icons.html' import icon_flag, icon_key %}
 <div class="flex min-h-[70vh] items-center justify-center px-4">
     <div class="w-full max-w-sm animate-slide-up">
-        {% if token %}
+        {% if token and valid %}
         <div class="text-center mb-8">
             <div class="inline-flex items-center justify-center size-16 bg-red-600 rounded-2xl shadow-lg mb-4">
                 <span class="text-white">{{ icon_flag(class="size-8 text-white") }}</span>
@@ -95,18 +90,51 @@
                 <span class="text-white">{{ icon_flag(class="size-8 text-white") }}</span>
             </div>
             <h1 class="text-2xl font-extrabold tracking-tight text-gray-900 dark:text-white">Registrazione</h1>
+            <p class="text-sm text-gray-500 dark:text-slate-400 mt-1">Incolla il tuo token di invito</p>
         </div>
-        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-gray-200 dark:border-slate-700 p-8 text-center">
-            <div class="inline-flex items-center justify-center size-12 bg-gray-100 dark:bg-slate-700 rounded-xl mb-4">
-                {{ icon_key(class="size-6 text-gray-400") }}
+
+        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-gray-200 dark:border-slate-700 p-8">
+            <div id="token-error" class="hidden flex items-center space-x-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-xl mb-4 text-sm"></div>
+
+            <div id="token-step" class="space-y-5">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1.5">Token di invito</label>
+                    <div class="relative">
+                        <svg class="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z"/></svg>
+                        <input id="token-input" type="text" required placeholder="Incolla il tuo token qui" class="block w-full rounded-xl border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 pl-10 pr-3 py-2.5 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 dark:text-white transition-colors duration-150">
+                    </div>
+                </div>
+                <button onclick="validateToken()" class="w-full bg-red-600 hover:bg-red-700 text-white rounded-xl px-4 py-2.5 text-sm font-semibold shadow-lg shadow-red-600/20 hover:shadow-red-600/30 transition-all duration-150">
+                    Valida token
+                </button>
             </div>
-            <p class="text-gray-600 dark:text-slate-400 mb-4">Per registrarti serve un token di invito.</p>
-            <p class="text-gray-500 dark:text-slate-500 text-sm">Chiedi a un amministratore.</p>
-            <a href="/auth/login" class="mt-6 inline-flex items-center text-red-600 hover:text-red-700 font-medium text-sm hover:underline">
-                <svg class="size-4 mr-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"/></svg>
-                Torna al login
-            </a>
+
+            <p class="mt-6 text-center text-sm text-gray-500 dark:text-slate-400">
+                <a href="/auth/login" class="text-red-600 hover:text-red-700 font-medium hover:underline">Torna al login</a>
+            </p>
         </div>
+
+        <script>
+        async function validateToken() {
+            const input = document.getElementById('token-input');
+            const errorEl = document.getElementById('token-error');
+            errorEl.classList.add('hidden');
+
+            const res = await fetch('/auth/register/token/validate?token=' + encodeURIComponent(input.value));
+            if (res.ok) {
+                const data = await res.json();
+                if (data.valid) {
+                    window.location.href = '/auth/register?token=' + encodeURIComponent(input.value);
+                } else {
+                    errorEl.innerHTML = '<svg class="size-4 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg><span>Token non valido o scaduto</span>';
+                    errorEl.classList.remove('hidden');
+                }
+            } else {
+                errorEl.innerHTML = '<svg class="size-4 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg><span>Errore di validazione</span>';
+                errorEl.classList.remove('hidden');
+            }
+        }
+        </script>
         {% endif %}
     </div>
 </div>

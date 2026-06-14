@@ -74,17 +74,22 @@ def test_register_page_get(client):
     assert resp.status_code == 200
 
 
-def test_register_success(client):
-    from app.blueprints.auth import registration_tokens
+def test_register_success(client, admin_user):
+    from app.database import get_db
+    from app.models import InviteToken
 
-    registration_tokens.add("valid-token")
+    with get_db() as db:
+        t = InviteToken(token="valid-token-db", created_by_id=admin_user.id)
+        db.add(t)
+        db.commit()
+
     resp = client.post(
         "/auth/register",
         json={
             "nome": "New User",
             "email": "new@test.com",
             "password": "newpass123",
-            "token": "valid-token",
+            "token": "valid-token-db",
         },
     )
     assert resp.status_code == 200
@@ -215,17 +220,84 @@ def test_admin_tokens_page(client, auth_headers):
 
 
 def test_admin_register_token_generation(client, auth_headers):
-    resp = client.get("/auth/register/token", headers=auth_headers)
+    resp = client.post(
+        "/auth/register/token",
+        json={"expires_in": "7d"},
+        headers=auth_headers,
+    )
     assert resp.status_code == 200
     data = resp.get_json()
     assert "token" in data
 
 
 def test_non_admin_cannot_generate_token(client, user_token):
-    resp = client.get(
-        "/auth/register/token", headers={"Authorization": f"Bearer {user_token}"}
+    resp = client.post(
+        "/auth/register/token",
+        headers={"Authorization": f"Bearer {user_token}"},
     )
     assert resp.status_code == 403
+
+
+def test_admin_delete_token(client, auth_headers, admin_user):
+    from app.database import get_db
+    from app.models import InviteToken
+
+    with get_db() as db:
+        t = InviteToken(token="delete-me-token", created_by_id=admin_user.id)
+        db.add(t)
+        db.commit()
+        token_id = t.id
+
+    resp = client.delete(
+        f"/auth/admin/tokens/{token_id}",
+        headers=auth_headers,
+    )
+    assert resp.status_code == 200
+
+    with get_db() as db:
+        assert db.query(InviteToken).filter(InviteToken.id == token_id).first() is None
+
+
+def test_admin_update_token_expiry(client, auth_headers, admin_user):
+    from app.database import get_db
+    from app.models import InviteToken
+
+    with get_db() as db:
+        t = InviteToken(token="update-me-token", created_by_id=admin_user.id)
+        db.add(t)
+        db.commit()
+        token_id = t.id
+
+    resp = client.put(
+        f"/auth/admin/tokens/{token_id}",
+        json={"expires_in": "24h"},
+        headers=auth_headers,
+    )
+    assert resp.status_code == 200
+
+    with get_db() as db:
+        t = db.query(InviteToken).filter(InviteToken.id == token_id).first()
+        assert t.expires_at is not None
+
+
+def test_validate_token_valid(client, admin_user):
+    from app.database import get_db
+    from app.models import InviteToken
+
+    with get_db() as db:
+        t = InviteToken(token="validate-valid", created_by_id=admin_user.id)
+        db.add(t)
+        db.commit()
+
+    resp = client.get("/auth/register/token/validate?token=validate-valid")
+    assert resp.status_code == 200
+    assert resp.get_json() == {"valid": True}
+
+
+def test_validate_token_invalid(client):
+    resp = client.get("/auth/register/token/validate?token=nonexistent")
+    assert resp.status_code == 200
+    assert resp.get_json() == {"valid": False}
 
 
 def test_non_admin_cannot_access_admin_tokens(client, user_token):
