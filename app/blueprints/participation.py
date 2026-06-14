@@ -2,9 +2,10 @@ from datetime import UTC, datetime
 
 from flask import Blueprint, g, jsonify, request
 
+from app.audit import log_action
 from app.auth import admin_required, jwt_required
 from app.database import get_db
-from app.models import AuditLog, Participation, Race
+from app.models import Participation, Race
 
 participation_bp = Blueprint("participation", __name__, url_prefix="/participation")
 
@@ -169,13 +170,15 @@ def admin_set_participation(user_id, race_id):
     return jsonify({"message": "Stato aggiornato"}), 200
 
 
-def _log(db, user_id, race_id, field, old_value, new_value):
-    log = AuditLog(
+def _log(db, user_id, race_id, field, old_value, new_value, description=None):
+    log_action(
+        db=db,
+        action="UPDATE",
+        entity_type="participation",
         user_id=user_id,
         race_id=race_id,
         field=field,
-        old_value=str(old_value) if old_value is not None else None,
-        new_value=str(new_value) if new_value is not None else None,
-        timestamp=datetime.now(UTC),
+        old_value=old_value,
+        new_value=new_value,
+        description=description,
     )
-    db.add(log)
