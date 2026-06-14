@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     app_version: str = "1.0.0"
     debug: bool = False
     secret_key: str = "cambia-questa-chiave-in-produzione"
+    log_page_views: bool = True
 
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
 
