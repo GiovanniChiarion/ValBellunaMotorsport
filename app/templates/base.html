@@ -59,7 +59,7 @@
                                 {{ icon_calendar(class="size-4 inline -mt-0.5 mr-1") }}
                                 Calendario
                             </a>
-                            {% if current_user.ruolo in ('admin', 'superadmin') %}
+                            {% if effective_role in ('admin', 'superadmin') %}
                             <a href="/races/admin/dashboard" class="px-3 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-slate-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors duration-150">
                                 <svg class="size-4 inline -mt-0.5 mr-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z"/></svg>
                                 Dashboard
@@ -72,7 +72,7 @@
                                 {{ icon_chart_bar(class="size-4 inline -mt-0.5 mr-1") }}
                                 Report
                             </a>
-                            {% if current_user.ruolo == 'superadmin' %}
+                            {% if effective_role == 'superadmin' %}
                             <a href="/history" class="px-3 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-slate-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors duration-150">
                                 {{ icon_clock(class="size-4 inline -mt-0.5 mr-1") }}
                                 Storico
@@ -96,10 +96,42 @@
                                     {{ current_user.nome[:1]|upper }}
                                 </div>
                                 <span class="text-sm font-medium text-gray-700 dark:text-slate-200">{{ current_user.nome }}</span>
-                            {% if current_user.ruolo == 'superadmin' %}
+                            {% if effective_role == 'superadmin' %}
                             <span class="text-[10px] font-bold bg-violet-500 text-white px-1.5 py-0.5 rounded-full">superadmin</span>
-                            {% elif current_user.ruolo == 'admin' %}
+                            {% elif effective_role == 'admin' %}
                             <span class="text-[10px] font-bold bg-yellow-400 text-yellow-900 px-1.5 py-0.5 rounded-full">admin</span>
+                            {% endif %}
+                            {% if current_user.ruolo == 'superadmin' %}
+                            <div class="relative ml-1" x-data="{ open: false }">
+                                <button @click="open = !open" class="flex items-center space-x-0.5 text-[10px] font-bold bg-violet-500 text-white px-1.5 py-0.5 rounded-full hover:bg-violet-600 transition-colors">
+                                    <span x-text="'{{ effective_role }}'"></span>
+                                    <svg class="size-3" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
+                                </button>
+                                <div x-show="open" @click.outside="open = false" x-transition.duration.100ms
+                                     class="absolute right-0 mt-1 w-40 bg-white dark:bg-slate-700 rounded-xl shadow-lg border border-gray-200 dark:border-slate-600 py-1 z-50">
+                                    <button @click="fetch('/auth/impersonate', {method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('token')}, body:JSON.stringify({ruolo:null})}).then(r=>location.reload())"
+                                            class="w-full text-left px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-slate-200 hover:bg-gray-100 dark:hover:bg-slate-600 flex items-center space-x-2"
+                                            :class="{'bg-violet-100 dark:bg-violet-900/30': '{{ effective_role }}' == 'superadmin'}">
+                                        <span x-show="'{{ effective_role }}' == 'superadmin'">●</span>
+                                        <span x-show="'{{ effective_role }}' != 'superadmin'">○</span>
+                                        <span>SuperAdmin</span>
+                                    </button>
+                                    <button @click="fetch('/auth/impersonate', {method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('token')}, body:JSON.stringify({ruolo:'admin'})}).then(r=>location.reload())"
+                                            class="w-full text-left px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-slate-200 hover:bg-gray-100 dark:hover:bg-slate-600 flex items-center space-x-2"
+                                            :class="{'bg-violet-100 dark:bg-violet-900/30': '{{ effective_role }}' == 'admin'}">
+                                        <span x-show="'{{ effective_role }}' == 'admin'">●</span>
+                                        <span x-show="'{{ effective_role }}' != 'admin'">○</span>
+                                        <span>Admin</span>
+                                    </button>
+                                    <button @click="fetch('/auth/impersonate', {method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('token')}, body:JSON.stringify({ruolo:'membro'})}).then(r=>location.reload())"
+                                            class="w-full text-left px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-slate-200 hover:bg-gray-100 dark:hover:bg-slate-600 flex items-center space-x-2"
+                                            :class="{'bg-violet-100 dark:bg-violet-900/30': '{{ effective_role }}' == 'membro'}">
+                                        <span x-show="'{{ effective_role }}' == 'membro'">●</span>
+                                        <span x-show="'{{ effective_role }}' != 'membro'">○</span>
+                                        <span>Utente</span>
+                                    </button>
+                                </div>
+                            </div>
                             {% endif %}
                             </div>
                             <a href="/auth/settings" class="px-3 py-1.5 text-sm font-medium text-gray-600 dark:text-slate-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors duration-150">
@@ -126,7 +158,7 @@
                     <a href="/races" class="block px-3 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700">
                         {{ icon_calendar(class="size-4 inline mr-2") }}Calendario
                     </a>
-                    {% if current_user.ruolo in ('admin', 'superadmin') %}
+                    {% if effective_role in ('admin', 'superadmin') %}
                     <a href="/races/admin/dashboard" class="block px-3 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700">
                         <svg class="size-4 inline mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z"/></svg>Dashboard
                     </a>
@@ -136,7 +168,7 @@
                     <a href="/reports" class="block px-3 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700">
                         {{ icon_chart_bar(class="size-4 inline mr-2") }}Report
                     </a>
-                    {% if current_user.ruolo == 'superadmin' %}
+                    {% if effective_role == 'superadmin' %}
                     <a href="/history" class="block px-3 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700">
                         {{ icon_clock(class="size-4 inline mr-2") }}Storico
                     </a>
@@ -146,9 +178,9 @@
                     <div class="flex items-center space-x-2 px-3 py-2">
                         <div class="size-7 rounded-full bg-red-600 flex items-center justify-center text-white text-xs font-bold">{{ current_user.nome[:1]|upper }}</div>
                         <span class="text-sm font-medium text-gray-700 dark:text-slate-200">{{ current_user.nome }}</span>
-                        {% if current_user.ruolo == 'superadmin' %}
+                        {% if effective_role == 'superadmin' %}
                         <span class="text-[10px] font-bold bg-violet-500 text-white px-1.5 py-0.5 rounded-full">superadmin</span>
-                        {% elif current_user.ruolo == 'admin' %}
+                        {% elif effective_role == 'admin' %}
                         <span class="text-[10px] font-bold bg-yellow-400 text-yellow-900 px-1.5 py-0.5 rounded-full">admin</span>
                         {% endif %}
                     </div>

@@ -20,9 +20,9 @@
                 <p class="font-bold text-gray-900 dark:text-white">{{ current_user.nome }}</p>
                 <p class="text-sm text-gray-500 dark:text-slate-400">{{ current_user.email }}</p>
             </div>
-            {% if current_user.ruolo == 'superadmin' %}
+            {% if effective_role == 'superadmin' %}
             <span class="text-[10px] font-bold bg-violet-500 text-white px-1.5 py-0.5 rounded-full">superadmin</span>
-            {% elif current_user.ruolo == 'admin' %}
+            {% elif effective_role == 'admin' %}
             <span class="text-[10px] font-bold bg-yellow-400 text-yellow-900 px-1.5 py-0.5 rounded-full">admin</span>
             {% endif %}
         </div>
