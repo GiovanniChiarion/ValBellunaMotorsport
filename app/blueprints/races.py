@@ -97,7 +97,7 @@ def race_detail(race_id):
             .all()
         }
 
-    is_admin = g.current_user.ruolo in ("admin", "superadmin")
+    is_admin = g.effective_role in ("admin", "superadmin")
     can_change = (
         race.scadenza_conferma is None or date.today() <= race.scadenza_conferma
     ) or is_admin

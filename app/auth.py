@@ -48,7 +48,7 @@ def admin_required(fn):
     @wraps(fn)
     @_jwt_required()
     def wrapper(*args, **kwargs):
-        if g.current_user.ruolo not in ("admin", "superadmin"):
+        if g.effective_role not in ("admin", "superadmin"):
             abort(403)
         return fn(*args, **kwargs)
 
@@ -59,7 +59,7 @@ def superadmin_required(fn):
     @wraps(fn)
     @_jwt_required()
     def wrapper(*args, **kwargs):
-        if g.current_user.ruolo != "superadmin":
+        if g.effective_role != "superadmin":
             abort(403)
         return fn(*args, **kwargs)
 
