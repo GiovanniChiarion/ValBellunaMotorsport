@@ -1,7 +1,7 @@
 from functools import wraps
 
 import bcrypt as _bcrypt
-from flask import abort, g
+from flask import abort, g, session
 from flask_jwt_extended import (
     JWTManager,
     get_jwt_identity,
@@ -21,6 +21,9 @@ def user_lookup_callback(_jwt_header, jwt_data):
     with get_db() as db:
         user = db.query(User).filter(User.id == int(identity), User.attivo == 1).first()
         g.current_user = user
+        g.effective_role = (
+            session.get("impersonated_role") or user.ruolo
+        ) if user else None
         return user
 
 
@@ -76,10 +79,15 @@ def optional_auth(fn):
                         .filter(User.id == int(identity), User.attivo == 1)
                         .first()
                     )
+                    g.effective_role = (
+                        session.get("impersonated_role") or g.current_user.ruolo
+                    ) if g.current_user else None
             else:
                 g.current_user = None
+                g.effective_role = None
         except Exception:
             g.current_user = None
+            g.effective_role = None
         return fn(*args, **kwargs)
 
     return wrapper
