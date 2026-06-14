@@ -141,57 +141,74 @@
 
 = 7. RIGA DI COMANDO (CLI) =
 
-  Tutti i comandi si eseguono dal terminale, nella cartella
-  del progetto, con l'ambiente virtuale attivo.
+  Esegui dalla root del progetto con virtualenv attivo e .env
+  configurato. Il CLI crea le tabelle all'avvio ed esce con
+  codice 1 in caso di errore. Dove indicato, --password e'
+  opzionale: se omesso, prompt interattivo nascosto con doppia
+  conferma (min 6 caratteri).
 
 == 7.1 LISTA UTENTI ==
 
   [CODE] .venv/bin/python -m app.cli list-users
 
-  Mostra tutti gli utenti con ID, nome, email, ruolo e
-  stato attivo.
+  [INFO Parametri|Nessuno]
+
+  Mostra tutti gli utenti (inclusi SuperAdmin, nascosti in UI).
+
+  [CODE] .venv/bin/python -m app.cli list-users
 
 == 7.2 RESET PASSWORD ==
 
-  [CODE] .venv/bin/python -m app.cli reset-password <email>
+  [CODE] .venv/bin/python -m app.cli reset-password <email> [--password <password>]
 
-  Resetta la password di un utente. Il comando chiede la
-  nuova password in modo interattivo (nascosta).
-  Opzione --password per usarla direttamente:
+  [INFO Posizionali|email (richiesto)]
+  [INFO Opzionali|--password (se omesso, prompt interattivo)]
+
+  [WARNING] Con --password la stringa e' in chiaro nella shell.
 
   [CODE] .venv/bin/python -m app.cli reset-password \
-    superadmin@valbellunamotorsport.it --password nuova123
+    superadmin@valbellunamotorsport.it
+  [CODE] .venv/bin/python -m app.cli reset-password \
+    mario.rossi@valbellunamotorsport.it --password nuovaPass99
 
 == 7.3 PROMUOVI A SUPERADMIN ==
 
   [CODE] .venv/bin/python -m app.cli make-superadmin <email>
 
-  Promuove un utente esistente al ruolo superadmin.
-  Utile se un admin deve diventare SuperAdmin.
+  [INFO Posizionali|email (richiesto)]
+
+  [CODE] .venv/bin/python -m app.cli make-superadmin \
+    admin@valbellunamotorsport.it
 
 == 7.4 PROMUOVI A ADMIN ==
 
   [CODE] .venv/bin/python -m app.cli make-admin <email>
 
-  Promuove un utente esistente al ruolo admin.
+  [INFO Posizionali|email (richiesto)]
+
+  [CODE] .venv/bin/python -m app.cli make-admin \
+    mario.rossi@valbellunamotorsport.it
 
 == 7.5 CREA NUOVO SUPERADMIN ==
 
-  [CODE] .venv/bin/python -m app.cli create-superadmin <email> <nome>
+  [CODE] .venv/bin/python -m app.cli create-superadmin <email> <nome> \
+    [--password <password>]
 
-  Crea un nuovo utente con ruolo superadmin.
-  Il comando chiede la password in modo interattivo.
-  Opzione --password per usarla direttamente:
+  [INFO Posizionali|email (richiesto)]
+  [INFO Posizionali|nome (richiesto, virgolette se con spazi)]
+  [INFO Opzionali|--password (se omesso, prompt interattivo)]
 
   [CODE] .venv/bin/python -m app.cli create-superadmin \
     admin2@valbellunamotorsport.it "Admin Due" --password forte123
 
 == 7.6 ELIMINA UTENTE ==
 
-  [CODE] .venv/bin/python -m app.cli delete-user <email>
+  [CODE] .venv/bin/python -m app.cli delete-user <email> [-y]
 
-  Elimina un utente (chiede conferma).
-  Opzione -y per saltare la conferma:
+  [INFO Posizionali|email (richiesto)]
+  [INFO Opzionali|-y (salta conferma)]
+
+  [WARNING] Irreversibile. Tutti i dati dell'utente persi.
 
   [CODE] .venv/bin/python -m app.cli delete-user \
     vecchio.utente@example.com -y
@@ -200,10 +217,9 @@
 
   [CODE] .venv/bin/python -m app.cli clear-logs
 
-  Cancella TUTTE le voci dello storico audit log.
+  [INFO Parametri|Nessuno]
 
-  [WARNING] Operazione irreversibile. Esegui un backup prima
-  di procedere se vuoi conservare i log.
+  [WARNING] Irreversibile. Backup prima di procedere.
 
 = 8. GESTIONE ACCOUNT SUPERADMIN =
 

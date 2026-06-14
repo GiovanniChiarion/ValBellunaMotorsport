@@ -64,7 +64,7 @@ DEBUG=true
 - App factory: `app/__init__.py:create_app()` — called by `run.py` and tests with `test_config`
 - Vanilla SQLAlchemy (no Flask-SQLAlchemy): `Base`, `engine`, `SessionLocal`, `get_db()` context manager in `app/database.py`
 - **DELETE journal** (not WAL) — PythonAnywhere NFS compat
-- `before_request`: auto `Base.metadata.create_all` + default admin/superadmin on first request
+- `before_request` (×2): `initialize_db` — auto `Base.metadata.create_all` + default admin/superadmin on first request; `log_page_view` — logs every GET (except `/health`) to audit log, gated by `log_page_views` config
 - APScheduler (`app/tasks.py`) defines `start_scheduler()`/`stop_scheduler()` — **never called** in app factory, not wired
 - `/` → unauthenticated → login, authenticated → calendar. `/health` → JSON status.
 - `pydantic-settings` (`app/config.py`) reads `.env` — `get_settings()` is `@lru_cache`d
