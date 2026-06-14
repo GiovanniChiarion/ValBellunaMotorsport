@@ -24,13 +24,17 @@
 
     <div id="generate-form" class="hidden bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl p-5 mb-6">
         <h3 class="text-sm font-bold text-gray-900 dark:text-white mb-3">Nuovo token</h3>
-        <div class="flex items-center gap-3">
-            <select id="expires-select" class="rounded-xl border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-3 py-2.5 text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500">
-                <option value="24h">24 ore</option>
-                <option value="7d" selected>7 giorni</option>
-                <option value="30d">30 giorni</option>
-                <option value="never">Mai</option>
+        <div class="flex items-center gap-2 flex-wrap">
+            <input id="gen-value" type="number" min="1" value="7" placeholder="1" class="w-20 rounded-xl border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-3 py-2.5 text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500">
+            <select id="gen-unit" class="rounded-xl border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-3 py-2.5 text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500">
+                <option value="minutes">Minuti</option>
+                <option value="hours">Ore</option>
+                <option value="days" selected>Giorni</option>
             </select>
+            <label class="flex items-center gap-1.5 text-sm text-gray-500 dark:text-slate-400 cursor-pointer select-none">
+                <input id="gen-never" type="checkbox" class="rounded border-gray-300 dark:border-slate-600 text-red-600 focus:ring-red-500">
+                Senza scadenza
+            </label>
             <button onclick="generateToken()" class="px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-medium shadow-sm transition-all duration-150">
                 Genera
             </button>
@@ -41,7 +45,7 @@
         <p class="text-sm font-semibold text-green-800 dark:text-green-400 mb-3">Nuovo token generato:</p>
         <div class="flex items-center space-x-2">
             <input id="token-link" type="text" readonly class="flex-1 bg-white dark:bg-slate-800 border border-green-300 dark:border-green-700 rounded-xl px-4 py-2.5 text-sm font-mono text-gray-700 dark:text-slate-300">
-            <button onclick="copyToken()" class="inline-flex items-center px-3 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-xl text-sm font-medium transition-all duration-150">
+            <button onclick="copyNewToken()" class="inline-flex items-center px-3 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-xl text-sm font-medium transition-all duration-150">
                 {{ icon_clipboard(class="size-4 mr-1") }}
                 Copia
             </button>
@@ -57,8 +61,8 @@
             {% set is_expired = t.expires_at and t.expires_at < now %}
             <div class="flex items-center gap-2 text-sm text-gray-600 dark:text-slate-400 bg-gray-50 dark:bg-slate-700/50 rounded-xl px-4 py-2.5 {% if is_expired %}opacity-50{% endif %}">
                 <span class="size-2 rounded-full {% if is_expired %}bg-gray-400{% else %}bg-green-500{% endif %} shrink-0"></span>
-                <span class="truncate flex-1 font-mono">{{ t.token }}</span>
-                <span class="text-xs font-medium {% if is_expired %}text-red-500{% else %}text-gray-400{% endif %} whitespace-nowrap">
+                <span class="truncate flex-1 font-mono min-w-0">{{ t.token }}</span>
+                <span class="text-xs font-medium {% if is_expired %}text-red-500{% else %}text-gray-400{% endif %} whitespace-nowrap shrink-0">
                     {% if is_expired %}
                     Scaduto
                     {% elif t.expires_at %}
@@ -67,13 +71,14 @@
                     Mai
                     {% endif %}
                 </span>
-                <button onclick="copyTokenUrl('{{ t.token }}')" class="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-slate-200 transition-colors" title="Copia link">
-                    {{ icon_clipboard(class="size-4") }}
+                <button onclick="copyTokenUrl('{{ t.token }}')" class="inline-flex items-center px-2.5 py-1.5 bg-white dark:bg-slate-700 border border-gray-200 dark:border-slate-600 hover:bg-gray-100 dark:hover:bg-slate-600 text-gray-600 dark:text-slate-300 rounded-lg text-xs font-medium transition-colors shrink-0" title="Copia link">
+                    {{ icon_clipboard(class="size-3.5 mr-1") }}
+                    Copia
                 </button>
-                <button onclick="editExpiry({{ t.id }})" class="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-slate-200 transition-colors" title="Modifica scadenza">
+                <button onclick="editExpiry({{ t.id }}, '{{ t.expires_at.isoformat() if t.expires_at else '' }}')" class="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-slate-200 transition-colors shrink-0" title="Modifica scadenza">
                     {{ icon_clock(class="size-4") }}
                 </button>
-                <button onclick="deleteToken({{ t.id }})" class="p-1.5 text-red-400 hover:text-red-600 transition-colors" title="Elimina">
+                <button onclick="deleteToken({{ t.id }})" class="p-1.5 text-red-400 hover:text-red-600 transition-colors shrink-0" title="Elimina">
                     {{ icon_trash(class="size-4") }}
                 </button>
             </div>
@@ -94,12 +99,20 @@
 <div id="expiry-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
     <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 w-full max-w-sm shadow-xl border border-gray-200 dark:border-slate-700">
         <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">Modifica scadenza</h3>
-        <select id="edit-expires-select" class="w-full rounded-xl border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-3 py-2.5 text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 mb-4">
-            <option value="24h">24 ore</option>
-            <option value="7d">7 giorni</option>
-            <option value="30d">30 giorni</option>
-            <option value="never">Mai</option>
-        </select>
+        <div class="space-y-3 mb-4">
+            <div class="flex items-center gap-2">
+                <input id="edit-value" type="number" min="1" value="7" placeholder="1" class="w-20 rounded-xl border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-3 py-2.5 text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500">
+                <select id="edit-unit" class="flex-1 rounded-xl border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-3 py-2.5 text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500">
+                    <option value="minutes">Minuti</option>
+                    <option value="hours">Ore</option>
+                    <option value="days">Giorni</option>
+                </select>
+            </div>
+            <label class="flex items-center gap-1.5 text-sm text-gray-500 dark:text-slate-400 cursor-pointer select-none">
+                <input id="edit-never" type="checkbox" class="rounded border-gray-300 dark:border-slate-600 text-red-600 focus:ring-red-500">
+                Senza scadenza
+            </label>
+        </div>
         <div class="flex gap-2">
             <button onclick="saveExpiry()" class="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-medium">Salva</button>
             <button onclick="closeExpiryModal()" class="flex-1 px-4 py-2.5 bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-slate-300 rounded-xl text-sm font-medium">Annulla</button>
@@ -114,13 +127,22 @@ function showGenerateForm() {
     document.getElementById('generate-form').classList.toggle('hidden');
 }
 
+function getExpiryPayload() {
+    const never = document.getElementById('gen-never').checked;
+    if (never) return { expires_unit: 'never' };
+    return {
+        expires_value: parseInt(document.getElementById('gen-value').value) || 1,
+        expires_unit: document.getElementById('gen-unit').value
+    };
+}
+
 async function generateToken() {
     const token = localStorage.getItem('token');
-    const expiresIn = document.getElementById('expires-select').value;
+    const payload = getExpiryPayload();
     const res = await fetch('/auth/register/token', {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ expires_in: expiresIn })
+        body: JSON.stringify(payload)
     });
     if (res.ok) {
         const data = await res.json();
@@ -140,7 +162,7 @@ async function generateToken() {
     }
 }
 
-function copyToken() {
+function copyNewToken() {
     const link = document.getElementById('token-link');
     navigator.clipboard.writeText(link.value).then(() => {
         showToast('Link copiato!', 'success');
@@ -153,8 +175,11 @@ async function copyTokenUrl(tokenStr) {
     showToast('Link copiato!', 'success');
 }
 
-function editExpiry(id) {
+function editExpiry(id, currentExpiresIso) {
     editingTokenId = id;
+    document.getElementById('edit-never').checked = !currentExpiresIso;
+    document.getElementById('edit-value').value = 7;
+    document.getElementById('edit-unit').value = 'days';
     document.getElementById('expiry-modal').classList.remove('hidden');
 }
 
@@ -163,14 +188,23 @@ function closeExpiryModal() {
     document.getElementById('expiry-modal').classList.add('hidden');
 }
 
+function getEditExpiryPayload() {
+    const never = document.getElementById('edit-never').checked;
+    if (never) return { expires_unit: 'never' };
+    return {
+        expires_value: parseInt(document.getElementById('edit-value').value) || 1,
+        expires_unit: document.getElementById('edit-unit').value
+    };
+}
+
 async function saveExpiry() {
     if (!editingTokenId) return;
     const token = localStorage.getItem('token');
-    const expiresIn = document.getElementById('edit-expires-select').value;
+    const payload = getEditExpiryPayload();
     const res = await fetch(`/auth/admin/tokens/${editingTokenId}`, {
         method: 'PUT',
         headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ expires_in: expiresIn })
+        body: JSON.stringify(payload)
     });
     if (res.ok) {
         showToast('Scadenza aggiornata!', 'success');

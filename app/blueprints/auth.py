@@ -21,6 +21,45 @@ from app.models import AuditLog, InviteToken, User
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 
 
+def _now() -> datetime:
+    """Naive UTC datetime for DB comparisons (SQLite doesn't preserve tzinfo)."""
+    return datetime.now(UTC).replace(tzinfo=None)
+
+
+def _parse_expiry(data: dict) -> datetime | None:
+    expires_value = data.get("expires_value")
+    expires_unit = data.get("expires_unit", "")
+    expires_in = data.get("expires_in", "")
+
+    if expires_unit == "never":
+        return None
+
+    if expires_value is not None and expires_unit in ("minutes", "hours", "days"):
+        try:
+            value = int(expires_value)
+        except (ValueError, TypeError):
+            value = 0
+        if value <= 0:
+            return None
+        if expires_unit == "minutes":
+            return _now() + timedelta(minutes=value)
+        if expires_unit == "hours":
+            return _now() + timedelta(hours=value)
+        if expires_unit == "days":
+            return _now() + timedelta(days=value)
+
+    if expires_in == "never":
+        return None
+    if expires_in == "24h":
+        return _now() + timedelta(hours=24)
+    if expires_in == "7d":
+        return _now() + timedelta(days=7)
+    if expires_in == "30d":
+        return _now() + timedelta(days=30)
+
+    return None
+
+
 @auth_bp.route("/login", methods=["GET"])
 def login_page():
     form = LoginForm()
@@ -106,7 +145,7 @@ def register_page():
                 InviteToken.token == token,
                 InviteToken.used_at.is_(None),
             ).first()
-            if t and (t.expires_at is None or t.expires_at > datetime.now(UTC)):
+            if t and (t.expires_at is None or t.expires_at > _now()):
                 valid = True
     return render_template("register.html", form=form, token=token if valid else "", valid=valid)
 
@@ -125,7 +164,7 @@ def register():
         if not token_record:
             return jsonify({"detail": "Token di registrazione non valido"}), 400
 
-        if token_record.expires_at and token_record.expires_at < datetime.now(UTC):
+        if token_record.expires_at and token_record.expires_at < _now():
             return jsonify({"detail": "Token scaduto"}), 400
 
         nome = data.get("nome", "").strip()
@@ -151,7 +190,7 @@ def register():
         )
         db.add(user)
         db.flush()
-        token_record.used_at = datetime.now(UTC)
+        token_record.used_at = _now()
         token_record.used_by_id = user.id
         log_action(
             db=db,
@@ -188,15 +227,7 @@ def generate_registration_token():
     import secrets
 
     data = request.get_json(silent=True) or {}
-    expires_in = data.get("expires_in", "never")
-
-    expires_at = None
-    if expires_in == "24h":
-        expires_at = datetime.now(UTC) + timedelta(hours=24)
-    elif expires_in == "7d":
-        expires_at = datetime.now(UTC) + timedelta(days=7)
-    elif expires_in == "30d":
-        expires_at = datetime.now(UTC) + timedelta(days=30)
+    expires_at = _parse_expiry(data) or None
 
     token_str = secrets.token_urlsafe(32)
     with get_db() as db:
@@ -414,8 +445,6 @@ def admin_delete_user(user_id):
 @auth_bp.route("/admin/tokens", methods=["GET"])
 @admin_required
 def admin_tokens_page():
-    from datetime import datetime as dt
-
     with get_db() as db:
         rows = (
             db.query(InviteToken)
@@ -433,7 +462,7 @@ def admin_tokens_page():
             }
             for t in rows
         ]
-    now = dt.now(UTC)
+    now = _now()
     return render_template("admin/tokens.html", tokens=tokens, now=now)
 
 
@@ -459,19 +488,9 @@ def delete_token(token_id):
 @admin_required
 def update_token(token_id):
     data = request.get_json(silent=True) or {}
-    expires_in = data.get("expires_in", "")
-
-    expires_at = None
-    if expires_in == "24h":
-        expires_at = datetime.now(UTC) + timedelta(hours=24)
-    elif expires_in == "7d":
-        expires_at = datetime.now(UTC) + timedelta(days=7)
-    elif expires_in == "30d":
-        expires_at = datetime.now(UTC) + timedelta(days=30)
-    elif expires_in == "never":
-        expires_at = None
-    else:
-        return jsonify({"detail": "Valore expires_in non valido"}), 400
+    expires_at = _parse_expiry(data)
+    if expires_at is None and data.get("expires_unit") not in ("never", None) and data.get("expires_in") not in ("never", "", None):
+        return jsonify({"detail": "Valore scadenza non valido"}), 400
 
     with get_db() as db:
         token = db.query(InviteToken).filter(InviteToken.id == token_id).first()
@@ -504,6 +523,6 @@ def validate_registration_token():
             InviteToken.token == token_val,
             InviteToken.used_at.is_(None),
         ).first()
-        if t and (t.expires_at is None or t.expires_at > datetime.now(UTC)):
+        if t and (t.expires_at is None or t.expires_at > _now()):
             return jsonify({"valid": True})
     return jsonify({"valid": False})
