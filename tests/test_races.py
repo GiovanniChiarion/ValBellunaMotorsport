@@ -179,3 +179,15 @@ def test_import_data(client, superadmin_token):
         headers={"Authorization": f"Bearer {superadmin_token}"},
     )
     assert resp.status_code == 200
+
+
+def test_calendar_view_filter_enabled_for_superadmin(client, superadmin_token):
+    resp = client.get("/races", headers={"Authorization": f"Bearer {superadmin_token}"})
+    assert resp.status_code == 200
+    assert b"filterMatches" in resp.data
+
+
+def test_calendar_view_filter_disabled_for_admin(client, auth_headers):
+    resp = client.get("/races", headers=auth_headers)
+    assert resp.status_code == 200
+    assert b"filterMatches" not in resp.data

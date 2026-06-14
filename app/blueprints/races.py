@@ -5,6 +5,7 @@ from flask import Blueprint, Response, g, jsonify, render_template, request
 from sqlalchemy import func
 
 from app.auth import admin_required, jwt_required, superadmin_required
+from app.features import feature_enabled
 from app.config import get_settings
 from app.database import get_db
 from app.models import AuditLog, Participation, Race, RaceType, User
@@ -70,6 +71,7 @@ def calendar_view():
         macchina_counts=macchina_counts,
         today=date.today(),
         current_user=g.current_user,
+        filters_enabled=feature_enabled("calendar_filters", g.current_user.ruolo),
     )
 
 
