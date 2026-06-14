@@ -72,7 +72,7 @@ def calendar_view():
         macchina_counts=macchina_counts,
         today=date.today(),
         current_user=g.current_user,
-        filters_enabled=feature_enabled("calendar_filters", g.current_user.ruolo),
+        filters_enabled=feature_enabled("calendar_filters", g.effective_role),
     )
 
 
