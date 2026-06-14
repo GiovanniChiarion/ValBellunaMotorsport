@@ -1,7 +1,8 @@
 from datetime import UTC, datetime
 
-from flask import Flask, g
+from flask import Flask, g, request
 
+from app.audit import log_action
 from app.auth import jwt_manager, optional_auth
 from app.config import get_settings
 from app.database import Base, engine, get_db
@@ -82,6 +83,15 @@ def create_app(test_config=None) -> Flask:
                         ruolo="admin",
                     )
                     db.add(admin)
+                    db.flush()
+                    log_action(
+                        db=db,
+                        action="CREATE",
+                        entity_type="user",
+                        entity_id=admin.id,
+                        actor_name="system",
+                        description="Admin predefinito creato automaticamente",
+                    )
                     db.commit()
                 superadmin = db.query(User).filter(User.ruolo == "superadmin").first()
                 if not superadmin:
@@ -92,7 +102,36 @@ def create_app(test_config=None) -> Flask:
                         ruolo="superadmin",
                     )
                     db.add(superadmin)
+                    db.flush()
+                    log_action(
+                        db=db,
+                        action="CREATE",
+                        entity_type="user",
+                        entity_id=superadmin.id,
+                        actor_name="system",
+                        description="SuperAdmin predefinito creato automaticamente",
+                    )
                     db.commit()
             g._db_initialized = True
+
+    @app.before_request
+    def log_page_view():
+        if request.method != "GET":
+            return
+        if request.path == "/health":
+            return
+        user = getattr(g, "current_user", None)
+        if not user:
+            return
+        if not get_settings().log_page_views:
+            return
+        with get_db() as db:
+            log_action(
+                db=db,
+                action="VIEW",
+                entity_type=request.path.split("/")[1] if request.path.count("/") > 0 else "page",
+                description=f"{user.nome} ha visitato {request.path}",
+            )
+            db.commit()
 
     return app
