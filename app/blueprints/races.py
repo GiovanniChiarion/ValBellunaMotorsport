@@ -4,6 +4,7 @@ from datetime import UTC, date, datetime
 from flask import Blueprint, Response, g, jsonify, render_template, request
 from sqlalchemy import func
 
+from app.audit import log_action
 from app.auth import admin_required, jwt_required, superadmin_required
 from app.features import feature_enabled
 from app.config import get_settings
@@ -160,14 +161,16 @@ def edit_race(race_id):
             old = getattr(race, field)
             if old != value:
                 setattr(race, field, value)
-                db.add(
-                    AuditLog(
-                        user_id=g.current_user.id,
-                        race_id=race.id,
-                        field=field,
-                        old_value=str(old) if old is not None else None,
-                        new_value=str(value) if value is not None else None,
-                    )
+                log_action(
+                    db=db,
+                    action="UPDATE",
+                    entity_type="race",
+                    entity_id=race.id,
+                    race_id=race.id,
+                    field=field,
+                    old_value=str(old) if old is not None else None,
+                    new_value=str(value) if value is not None else None,
+                    description=f"{g.current_user.nome} ha modificato '{field}' della gara '{race.descrizione}'",
                 )
 
         db.commit()
@@ -194,14 +197,15 @@ def create_race():
         db.refresh(race)
         race_id = race.id
         race_desc = race.descrizione
-        db.add(
-            AuditLog(
-                user_id=g.current_user.id,
-                race_id=race_id,
-                field="descrizione",
-                old_value=None,
-                new_value=race_desc,
-            )
+        log_action(
+            db=db,
+            action="CREATE",
+            entity_type="race",
+            entity_id=race_id,
+            race_id=race_id,
+            field="descrizione",
+            new_value=race_desc,
+            description=f"{g.current_user.nome} ha creato la gara '{race_desc}'",
         )
         db.commit()
 
@@ -217,6 +221,15 @@ def delete_race(race_id):
         race = db.query(Race).filter(Race.id == race_id).first()
         if not race:
             return jsonify({"error": "Gara non trovata"}), 404
+        desc = race.descrizione
+        log_action(
+            db=db,
+            action="DELETE",
+            entity_type="race",
+            entity_id=race_id,
+            race_id=race_id,
+            description=f"{g.current_user.nome} ha eliminato la gara '{desc}'",
+        )
         db.delete(race)
         db.commit()
 
@@ -296,13 +309,15 @@ def admin_set_role(user_id):
 
         old = user.ruolo
         user.ruolo = ruolo
-        db.add(
-            AuditLog(
-                user_id=g.current_user.id,
-                field="user.ruolo",
-                old_value=old,
-                new_value=ruolo,
-            )
+        log_action(
+            db=db,
+            action="ROLE_CHANGE",
+            entity_type="user",
+            entity_id=user.id,
+            field="user.ruolo",
+            old_value=old,
+            new_value=ruolo,
+            description=f"{g.current_user.nome} ha cambiato il ruolo di {user.nome}: {old} → {ruolo}",
         )
         db.commit()
 
@@ -323,13 +338,15 @@ def admin_toggle_user(user_id):
         user.attivo = 0 if user.attivo else 1
         new = "attivo" if user.attivo else "disattivato"
         new_attivo = user.attivo
-        db.add(
-            AuditLog(
-                user_id=g.current_user.id,
-                field="user.attivo",
-                old_value=old,
-                new_value=new,
-            )
+        log_action(
+            db=db,
+            action="USER_TOGGLE",
+            entity_type="user",
+            entity_id=user.id,
+            field="user.attivo",
+            old_value=old,
+            new_value=new,
+            description=f"{g.current_user.nome} ha {'disattivato' if new_attivo == 0 else 'attivato'} {user.nome}",
         )
         db.commit()
 
@@ -364,6 +381,14 @@ def create_race_type():
 
         rt = RaceType(codice=codice, descrizione=descrizione)
         db.add(rt)
+        db.flush()
+        log_action(
+            db=db,
+            action="CREATE",
+            entity_type="race_type",
+            entity_id=rt.id,
+            description=f"{g.current_user.nome} ha creato il tipo gara '{codice}'",
+        )
         db.commit()
         db.refresh(rt)
 
@@ -386,6 +411,14 @@ def delete_race_type(type_id):
         rt = db.query(RaceType).filter(RaceType.id == type_id).first()
         if not rt:
             return jsonify({"error": "Tipo non trovato"}), 404
+        codice = rt.codice
+        log_action(
+            db=db,
+            action="DELETE",
+            entity_type="race_type",
+            entity_id=type_id,
+            description=f"{g.current_user.nome} ha eliminato il tipo gara '{codice}'",
+        )
         db.delete(rt)
         db.commit()
 
@@ -405,6 +438,13 @@ def export_all_data():
     data_section = {}
 
     with get_db() as db:
+        log_action(
+            db=db,
+            action="EXPORT",
+            entity_type="system",
+            description=f"{g.current_user.nome} ha esportato il backup ({', '.join(sorted(sections))})",
+        )
+        db.commit()
         if "gare" in sections or not include:
             race_types = db.query(RaceType).order_by(RaceType.codice).all()
             races = db.query(Race).order_by(Race.id).all()
@@ -502,6 +542,12 @@ def import_all_data():
         return jsonify({"error": "JSON non valido: manca 'data'"}), 400
 
     with get_db() as db:
+        log_action(
+            db=db,
+            action="IMPORT",
+            entity_type="system",
+            description=f"{g.current_user.nome} ha importato un backup",
+        )
         try:
             for rt in data.get("race_types", []):
                 existing = (

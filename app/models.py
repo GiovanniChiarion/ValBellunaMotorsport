@@ -20,7 +20,7 @@ class User(Base):
         "Participation", back_populates="user", cascade="all, delete-orphan"
     )
     audit_logs = relationship(
-        "AuditLog", back_populates="user", cascade="all, delete-orphan"
+        "AuditLog", back_populates="user", cascade="save-update, merge"
     )
 
 
@@ -49,7 +49,7 @@ class Race(Base):
         "Participation", back_populates="race", cascade="all, delete-orphan"
     )
     audit_logs = relationship(
-        "AuditLog", back_populates="race", cascade="all, delete-orphan"
+        "AuditLog", back_populates="race", cascade="save-update, merge"
     )
 
 
