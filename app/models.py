@@ -74,6 +74,18 @@ class Participation(Base):
     race = relationship("Race", back_populates="participations")
 
 
+class InviteToken(Base):
+    __tablename__ = "invite_tokens"
+
+    id = Column(Integer, primary_key=True)
+    token = Column(String(64), unique=True, nullable=False, index=True)
+    created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC))
+    expires_at = Column(DateTime, nullable=True)
+    used_at = Column(DateTime, nullable=True)
+    created_by_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    used_by_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+
+
 class AuditLog(Base):
     __tablename__ = "audit_logs"
 

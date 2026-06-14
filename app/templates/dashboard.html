@@ -93,10 +93,6 @@ function filterState() {
             {{ icon_plus(class="size-4 mr-1.5") }}
             Nuova gara
         </a>
-        <a href="/auth/admin/tokens" class="inline-flex items-center px-4 py-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 rounded-xl text-sm font-medium shadow-sm transition-all duration-150">
-            {{ icon_key(class="size-4 mr-1.5") }}
-            Token invito
-        </a>
         {% if current_user.ruolo == 'superadmin' %}
         <div x-data="{ modal: false, gare: true, utenti: true, logs: true }">
             <button @click="modal = true" class="inline-flex items-center px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-xl text-sm font-medium shadow-sm transition-all duration-150">

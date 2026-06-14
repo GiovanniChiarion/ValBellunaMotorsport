@@ -20,9 +20,10 @@ Quando ti viene chiesto di aggiornare, esegui questo workflow:
 
 Kart association calendar app — Flask 3.1, SQLAlchemy 2.0, Flask-JWT-Extended, Jinja2 + HTMX 2.0 + Alpine.js 3.14 + Tailwind CSS (CDN). Deployed PythonAnywhere. Python 3.14 (pyright). FastAPI→Flask rewrite (`docs/rewrite-log.md`).
 
-# Documentation
+# Important 
 
-When a new feature is implemented, make sure it is documented in `docs/`. If txt files are modified, generate always also the relative pdfs.
+- When a new feature is implemented, make sure it is documented in `docs/`. If txt files are modified, generate always also the relative pdfs.
+- When a new feature is implemented, if not specified, implement it only for SuperAdmin as it is considered a beta-tester with all the powers of the Admin + other features. If in doubt, ask.
 
 ## Quick start
 
