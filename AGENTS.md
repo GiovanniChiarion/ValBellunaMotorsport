@@ -59,7 +59,7 @@ DEBUG=true
 | `/races` | `blueprints/races.py` | Calendar (year filter), detail, CRUD, admin dashboard/members/types, export (superadmin), import (superadmin) |
 | `/participation` | `blueprints/participation.py` | Set status, update note, toggle macchina, admin override |
 | `/reports` | `blueprints/reports.py` | Aggregate stats (admin-only, `ruolo != "superadmin"` filter) |
-| `/history` | `blueprints/history.py` | Last 200 audit logs, export JSON (superadmin, no row limit) |
+| `/history` | `blueprints/history.py` | Paginated audit log viewer with action/user/date/ip/race filters; export JSON (superadmin, no row limit) |
 
 ## App structure
 
@@ -81,7 +81,7 @@ DEBUG=true
 - Login: JSON body + httpOnly cookie
 - Defaults: `admin@valbellunamotorsport.it` / `admin123`, `superadmin@valbellunamotorsport.it` / `superadmin123`
 - SuperAdmin hidden from member/participant/report/dashboard queries (`User.ruolo != "superadmin"`)
-- Registration tokens in-memory `app/blueprints/auth.py:20` — **lost on restart**
+- Registration tokens in-memory `app/blueprints/auth.py:21` — **lost on restart**
 
 ## DB quirks
 
@@ -111,6 +111,7 @@ DEBUG=true
 list-users                        reset-password <email> [--password]
 make-superadmin <email>           make-admin <email>
 create-superadmin <email> <nome>  delete-user <email> [-y]
+clear-logs
 ```
 
 ## Seed
