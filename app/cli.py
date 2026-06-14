@@ -2,6 +2,7 @@ import argparse
 import getpass
 import sys
 
+from app.audit import log_action
 from app.auth import hash_password
 from app.database import Base, SessionLocal, engine
 from app.models import User
@@ -41,6 +42,14 @@ def cmd_reset_password(args):
             print("Errore: la password deve essere almeno 6 caratteri")
             sys.exit(1)
         user.password_hash = hash_password(password)
+        log_action(
+            db=db,
+            action="PASSWORD_CHANGE",
+            entity_type="user",
+            entity_id=user.id,
+            actor_name="CLI",
+            description=f"CLI: password resettata per {user.nome} ({user.email})",
+        )
         db.commit()
         print(f"Password resettata per {user.nome} ({user.email})")
     finally:
@@ -56,6 +65,17 @@ def cmd_make_superadmin(args):
             sys.exit(1)
         old_role = user.ruolo
         user.ruolo = "superadmin"
+        log_action(
+            db=db,
+            action="ROLE_CHANGE",
+            entity_type="user",
+            entity_id=user.id,
+            field="user.ruolo",
+            old_value=old_role,
+            new_value="superadmin",
+            actor_name="CLI",
+            description=f"CLI: ruolo cambiato per {user.nome} ({user.email}): {old_role} → superadmin",
+        )
         db.commit()
         print(
             f"Ruolo cambiato: {user.nome} ({user.email}) da '{old_role}' a 'superadmin'"
@@ -73,6 +93,17 @@ def cmd_make_admin(args):
             sys.exit(1)
         old_role = user.ruolo
         user.ruolo = "admin"
+        log_action(
+            db=db,
+            action="ROLE_CHANGE",
+            entity_type="user",
+            entity_id=user.id,
+            field="user.ruolo",
+            old_value=old_role,
+            new_value="admin",
+            actor_name="CLI",
+            description=f"CLI: ruolo cambiato per {user.nome} ({user.email}): {old_role} → admin",
+        )
         db.commit()
         print(f"Ruolo cambiato: {user.nome} ({user.email}) da '{old_role}' a 'admin'")
     finally:
@@ -104,6 +135,15 @@ def cmd_create_superadmin(args):
             attivo=1,
         )
         db.add(user)
+        db.flush()
+        log_action(
+            db=db,
+            action="REGISTER",
+            entity_type="user",
+            entity_id=user.id,
+            actor_name="CLI",
+            description=f"CLI: SuperAdmin creato {user.nome} ({user.email})",
+        )
         db.commit()
         print(f"SuperAdmin creato: {user.nome} ({user.email})")
     finally:
@@ -125,6 +165,14 @@ def cmd_delete_user(args):
             if conferma.lower() not in ("s", "si"):
                 print("Annullato.")
                 return
+        log_action(
+            db=db,
+            action="DELETE",
+            entity_type="user",
+            entity_id=user.id,
+            actor_name="CLI",
+            description=f"CLI: utente eliminato {user.nome} ({user.email})",
+        )
         db.delete(user)
         db.commit()
         print(f"Utente eliminato: {user.nome} ({user.email})")

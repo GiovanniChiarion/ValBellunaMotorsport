@@ -21,20 +21,23 @@ def log_action(
     user_agent: str | None = None,
     actor_name: str | None = None,
 ) -> AuditLog:
-    if ip_address is None:
-        forwarded = request.headers.get("X-Forwarded-For")
-        ip_address = forwarded.split(",")[0].strip() if forwarded else request.remote_addr
+    try:
+        if ip_address is None:
+            forwarded = request.headers.get("X-Forwarded-For")
+            ip_address = forwarded.split(",")[0].strip() if forwarded else request.remote_addr
 
-    if user_agent is None:
-        user_agent = request.headers.get("User-Agent", "")[:255]
+        if user_agent is None:
+            user_agent = request.headers.get("User-Agent", "")[:255]
 
-    if user_id is None or actor_name is None:
-        current = getattr(g, "current_user", None)
-        if current:
-            if user_id is None:
-                user_id = current.id
-            if actor_name is None:
-                actor_name = current.nome
+        if user_id is None or actor_name is None:
+            current = getattr(g, "current_user", None)
+            if current:
+                if user_id is None:
+                    user_id = current.id
+                if actor_name is None:
+                    actor_name = current.nome
+    except RuntimeError:
+        pass
 
     log = AuditLog(
         action=action,
