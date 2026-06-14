@@ -3,7 +3,35 @@
 {% block content %}
 {% from '_icons.html' import icon_chevron_left, icon_chevron_right, icon_chevron_down, icon_check_circle, icon_x_circle, icon_question_mark_circle, icon_car, icon_calendar, icon_tag, icon_note, icon_plus, icon_key, icon_spinner, icon_flag, icon_alert %}
 
-<div x-data="{ year: {{ year }} }">
+{% if filters_enabled %}
+<script>
+function filterState() {
+    return {
+        open: false,
+        filterStatus: 'future',
+        filterNome: '',
+        filterDa: '',
+        filterA: '',
+        filterMatches(stato, inizio, fine, nome) {
+            if (this.filterStatus === 'future' && stato === 'conclusa') return false;
+            if (this.filterStatus === 'concluded' && stato !== 'conclusa') return false;
+            if (this.filterNome && !nome.toLowerCase().includes(this.filterNome.toLowerCase())) return false;
+            if (this.filterDa && inizio && inizio < this.filterDa) return false;
+            if (this.filterA && inizio && inizio > this.filterA) return false;
+            return true;
+        },
+        resetFilters() {
+            this.filterStatus = 'future';
+            this.filterNome = '';
+            this.filterDa = '';
+            this.filterA = '';
+        },
+    };
+}
+</script>
+{% endif %}
+
+<div x-data="{ year: {{ year }}{% if filters_enabled %}, ...filterState(){% endif %} }">
     <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
         <div class="flex items-center space-x-3">
             <span class="text-red-600">{{ icon_flag(class="size-7 text-red-600") }}</span>
@@ -23,6 +51,14 @@
                     {{ icon_chevron_right(class="size-4") }}
                 </button>
             </div>
+            {% if filters_enabled %}
+            <button @click="open = true"
+                    class="inline-flex items-center px-3 py-2.5 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 rounded-xl text-sm font-medium shadow-sm transition-all duration-150"
+                    title="Filtri">
+                <svg class="size-4 mr-1.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M7 12h10M10 18h4"/></svg>
+                Filtri
+            </button>
+            {% endif %}
         </div>
     </div>
 
@@ -117,7 +153,8 @@
         {% set card_opacity = '' %}
         {% endif %}
 
-        <div class="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm card-hover {{ card_opacity }}{% if stato_dinamico == 'in_corso' %} border-orange-200 dark:border-orange-800{% endif %}{% if stato_dinamico == 'conclusa' %} bg-gray-50 dark:bg-slate-800/50{% endif %}" x-data="{ open: false }">
+        <div {% if filters_enabled %}x-show="filterMatches('{{ stato_dinamico }}', '{{ race.data_inizio or '' }}', '{{ race.data_fine or '' }}', '{{ race.descrizione|e }}')"{% endif %}
+             class="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm card-hover {{ card_opacity }}{% if stato_dinamico == 'in_corso' %} border-orange-200 dark:border-orange-800{% endif %}{% if stato_dinamico == 'conclusa' %} bg-gray-50 dark:bg-slate-800/50{% endif %}" x-data="{ open: false }">
             <div class="px-5 py-4 flex items-center cursor-pointer gap-4" @click="open = !open">
                 <div class="hidden sm:flex flex-col items-center justify-center min-w-[60px]">
                     <span class="text-2xl font-extrabold text-gray-900 dark:text-white leading-none">
@@ -284,5 +321,66 @@
         </div>
         {% endfor %}
     </div>
+
+    {% if filters_enabled %}
+    <div x-show="open" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-2 sm:p-4" @click.self="open = false" x-cloak>
+        <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 w-full max-w-md shadow-xl border border-gray-200 dark:border-slate-700 max-h-[90vh] overflow-y-auto" @click.stop>
+            <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">Filtra calendario</h3>
+
+            <div class="space-y-5">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2">Stato</label>
+                    <div class="flex gap-1.5">
+                        <button @click="filterStatus = 'future'"
+                                :class="filterStatus === 'future' ? 'bg-emerald-600 text-white shadow-sm' : 'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300 hover:bg-gray-200 dark:hover:bg-slate-600'"
+                                class="flex-1 min-h-[44px] px-3 py-2 rounded-xl text-sm font-semibold transition-all duration-150">
+                            In corso / Future
+                        </button>
+                        <button @click="filterStatus = 'concluded'"
+                                :class="filterStatus === 'concluded' ? 'bg-gray-600 text-white shadow-sm' : 'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300 hover:bg-gray-200 dark:hover:bg-slate-600'"
+                                class="flex-1 min-h-[44px] px-3 py-2 rounded-xl text-sm font-semibold transition-all duration-150">
+                            Concluse
+                        </button>
+                        <button @click="filterStatus = 'all'"
+                                :class="filterStatus === 'all' ? 'bg-blue-600 text-white shadow-sm' : 'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300 hover:bg-gray-200 dark:hover:bg-slate-600'"
+                                class="flex-1 min-h-[44px] px-3 py-2 rounded-xl text-sm font-semibold transition-all duration-150">
+                            Tutte
+                        </button>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-1.5">Nome gara</label>
+                    <input type="text" x-model="filterNome" placeholder="Cerca per nome..."
+                           class="w-full min-h-[44px] px-4 py-2.5 bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-xl text-sm dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500">
+                </div>
+
+                <div class="flex gap-3">
+                    <div class="flex-1">
+                        <label class="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-1.5">Data da</label>
+                        <input type="date" x-model="filterDa"
+                               class="w-full min-h-[44px] px-4 py-2.5 bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-xl text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500">
+                    </div>
+                    <div class="flex-1">
+                        <label class="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-1.5">Data a</label>
+                        <input type="date" x-model="filterA"
+                               class="w-full min-h-[44px] px-4 py-2.5 bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-xl text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500">
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex gap-2 mt-6 pt-4 border-t border-gray-100 dark:border-slate-700">
+                <button @click="open = false"
+                        class="flex-1 min-h-[44px] px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-semibold shadow-sm transition-all duration-150">
+                    Applica
+                </button>
+                <button @click="resetFilters()"
+                        class="flex-1 min-h-[44px] px-4 py-2.5 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-700 dark:text-slate-300 rounded-xl text-sm font-semibold transition-all duration-150">
+                    Reset
+                </button>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 </div>
 {% endblock %}
