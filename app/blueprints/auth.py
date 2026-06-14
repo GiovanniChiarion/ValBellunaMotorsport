@@ -1,6 +1,6 @@
 from datetime import UTC, datetime, timedelta
 
-from flask import Blueprint, g, jsonify, render_template, request
+from flask import Blueprint, g, jsonify, render_template, request, session
 from flask_jwt_extended import (
     create_access_token,
     set_access_cookies,
@@ -8,7 +8,7 @@ from flask_jwt_extended import (
 )
 
 from app.audit import log_action
-from app.auth import admin_required, hash_password, jwt_required, verify_password
+from app.auth import admin_required, hash_password, jwt_required, superadmin_required, verify_password
 from app.database import get_db
 from app.forms import (
     LoginForm,
@@ -510,6 +510,35 @@ def update_token(token_id):
         )
         db.commit()
     return jsonify({"message": "Scadenza aggiornata"}), 200
+
+
+@auth_bp.route("/impersonate", methods=["POST"])
+@superadmin_required
+def impersonate():
+    data = request.get_json(silent=True) or {}
+    ruolo = data.get("ruolo")
+    if ruolo is not None and ruolo not in ("admin", "membro"):
+        return jsonify({"detail": "Ruolo non valido"}), 400
+
+    old = session.get("impersonated_role") or "superadmin"
+    if ruolo is None:
+        session.pop("impersonated_role", None)
+    else:
+        session["impersonated_role"] = ruolo
+    new = session.get("impersonated_role") or "superadmin"
+
+    g.effective_role = new
+
+    with get_db() as db:
+        log_action(
+            db=db,
+            action="IMPERSONATE",
+            entity_type="auth",
+            description=f"Impersonazione: {g.current_user.nome}: {old} → {new}",
+        )
+        db.commit()
+
+    return jsonify({"effective_role": new})
 
 
 @auth_bp.route("/register/token/validate", methods=["GET"])

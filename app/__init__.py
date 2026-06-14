@@ -42,8 +42,12 @@ def create_app(test_config=None) -> Flask:
 
     @app.context_processor
     def inject_globals():
+        effective_role = getattr(g, "effective_role", None)
+        if effective_role is None and getattr(g, "current_user", None):
+            effective_role = g.current_user.ruolo
         return {
             "current_user": getattr(g, "current_user", None),
+            "effective_role": effective_role,
             "now": datetime.now(UTC),
         }
 
@@ -133,5 +137,10 @@ def create_app(test_config=None) -> Flask:
                 description=f"VIEW: {user.nome} → {request.path}",
             )
             db.commit()
+
+    @app.before_request
+    def ensure_effective_role():
+        if "effective_role" not in g:
+            g.effective_role = None
 
     return app
